@@ -3,7 +3,7 @@
 
 namespace HealthCheck.Configuration
 {
-    internal class HealthCheckOptions
+    public class HealthCheckOptions
     {
         ListenerOptions Status{ get; set; }
         ListenerOptions Startup { get; set; }

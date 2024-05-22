@@ -1,9 +1,11 @@
-﻿using Microsoft.Extensions.DependencyInjection.Extensions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace HealthCheck.Registration
 {
@@ -29,7 +31,7 @@ namespace HealthCheck.Registration
         {
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
-            ServiceNameRepo.Add(typeof(TService), name);
+            CreateRegistration(typeof(TService), HealthCheckType.Liveness, name);
             _services.TryAddKeyedSingleton<TService>(HealthCheckType.Liveness);
             return this;
         }
@@ -46,7 +48,7 @@ namespace HealthCheck.Registration
             ArgumentNullException.ThrowIfNull(instance, nameof(instance));
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
-            ServiceNameRepo.Add(instance.GetType(), name);
+            CreateRegistration(instance.GetType(), HealthCheckType.Liveness, name);
             _services.TryAddKeyedSingleton(HealthCheckType.Liveness, instance);
             return this;
         }
@@ -64,7 +66,7 @@ namespace HealthCheck.Registration
         {
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
-            ServiceNameRepo.Add(typeof(TService), name);
+            CreateRegistration(typeof(TService), HealthCheckType.Readiness, name);
             _services.TryAddKeyedSingleton<TService>(HealthCheckType.Readiness);
             return this;
         }
@@ -81,7 +83,7 @@ namespace HealthCheck.Registration
             ArgumentNullException.ThrowIfNull(instance, nameof(instance));
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
-            ServiceNameRepo.Add(instance.GetType(), name);
+            CreateRegistration(instance.GetType(), HealthCheckType.Readiness, name);
             _services.TryAddKeyedSingleton(HealthCheckType.Readiness, instance);
             return this;
         }
@@ -99,7 +101,7 @@ namespace HealthCheck.Registration
         {
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
-            ServiceNameRepo.Add(typeof(TService), name);
+            CreateRegistration(typeof(TService), HealthCheckType.Startup, name);
             _services.TryAddKeyedSingleton<TService>(HealthCheckType.Startup);
             return this;
         }
@@ -116,7 +118,7 @@ namespace HealthCheck.Registration
             ArgumentNullException.ThrowIfNull(instance, nameof(instance));
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
-            ServiceNameRepo.Add(instance.GetType(), name);
+            CreateRegistration(instance.GetType(), HealthCheckType.Startup, name);
             _services.TryAddKeyedSingleton(HealthCheckType.Startup, instance);
             return this;
         }
@@ -134,7 +136,7 @@ namespace HealthCheck.Registration
         {
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
-            ServiceNameRepo.Add(typeof(TService), name);
+            CreateRegistration(typeof(TService), HealthCheckType.Status, name);
             _services.TryAddKeyedSingleton<TService>(HealthCheckType.Status);
             return this;
         }
@@ -151,10 +153,25 @@ namespace HealthCheck.Registration
             ArgumentNullException.ThrowIfNull(instance, nameof(instance));
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
-            ServiceNameRepo.Add(instance.GetType(), name);
+            CreateRegistration(instance.GetType(), HealthCheckType.Status, name);
             _services.TryAddKeyedSingleton(HealthCheckType.Status, instance);
             return this;
         }
         #endregion
+
+
+        private HealthCheckRegistration CreateRegistration(Type type, HealthCheckType healthCheckType, string name)
+        {
+            HealthCheckRegistration registration = new HealthCheckRegistration()
+            {
+                Type = type,
+                HealthCheckType = healthCheckType,
+                Name = name,
+            };
+
+            RegistrationRepo.Add(registration);
+
+            return registration;
+        }
     }
 }

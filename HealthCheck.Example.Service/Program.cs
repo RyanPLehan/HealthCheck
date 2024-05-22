@@ -1,7 +1,7 @@
-using System;
 using HealthCheck.Configuration;
+using HealthCheck.Registration;
 
-namespace HealthCheck
+namespace HealthCheck.Example.Service
 {
     public class Program
     {
@@ -19,18 +19,19 @@ namespace HealthCheck
 
         private static IServiceCollection ConfigureOptions(ConfigurationManager configuration, IServiceCollection services)
         {
-            services.Configure<HealthCheckOptions>(configuration.GetSection("HealthCheck"));
+            // Explicity Set Configuration
+            // services.Configure<HealthCheckOptions>(configuration.GetSection(HealthCheckWorker.CONFIGURATION_SECTION));
             return services;
         }
 
         private static IServiceCollection ConfigureServices(IServiceCollection services)
         {
+            services.Add
             return services;
         }
 
         private static IServiceCollection ConfigureWorkers(IServiceCollection services)
         {
-            services.AddHostedService<HealthCheckWorker>();
             return services;
         }
     }

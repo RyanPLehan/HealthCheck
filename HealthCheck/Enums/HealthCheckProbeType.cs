@@ -1,7 +1,7 @@
 ﻿
 namespace HealthCheck
 {
-    internal enum HealthCheckProbeType : int
+    public enum HealthCheckProbeType : int
     {
         HttpStatus = 1,
         HttpProbe = 2,

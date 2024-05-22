@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
+using HealthCheck.Registration;
 
 
 namespace HealthCheck
@@ -10,6 +14,7 @@ namespace HealthCheck
     /// </summary>
     internal class HealthCheckService : IHealthCheckService
     {
+        private const string NO_REGISTRATION_NAME = "Unregistered Health Check Service";
         private readonly ILogger _logger;
         private readonly IServiceProvider _serviceProvider;
 
@@ -55,8 +60,9 @@ namespace HealthCheck
             // Make it simple and iterate one at a time
             foreach (IHealthCheck service in services)
             {
-                string name = ServiceNameRepo.Get(service.GetType());
+                HealthCheckRegistration? registration = RegistrationRepo.Get(service.GetType(), healthCheckType);
                 HealthCheckResult result = HealthCheckResult.Unhealthy();
+                string name = registration?.Name ?? NO_REGISTRATION_NAME;
 
                 try
                 {
@@ -65,7 +71,7 @@ namespace HealthCheck
 
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Health Check Custom Service: {0}", service.GetType().FullName);
+                    _logger.LogError(ex, "Health Check Custom Service: {0}", name);
                 }
                     
                 finally

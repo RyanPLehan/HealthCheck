@@ -1,11 +1,14 @@
 using HealthCheck.Configuration;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace HealthCheck
 {
     public class HealthCheckWorker : BackgroundService
     {
+        public const string CONFIGURATION_SECTION = "HealthCheck";
         private readonly ILogger<HealthCheckWorker> _logger;
         private readonly IHealthCheckService _healthCheckService;
         private readonly HealthCheckOptions _options;
@@ -76,7 +79,7 @@ namespace HealthCheck
         private HealthCheckOptions LoadOptions(IConfiguration configuration)
         {
             HealthCheckOptions options = new HealthCheckOptions();
-            configuration.GetSection("HealthCheck").Bind(options);
+            configuration.GetSection(CONFIGURATION_SECTION).Bind(options);
             return options;
         }
     }

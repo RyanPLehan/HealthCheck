@@ -1,6 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection.Extensions;
-using System;
-
+﻿using System;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace HealthCheck.Registration
 {
@@ -11,6 +11,7 @@ namespace HealthCheck.Registration
             services.AddMemoryCache();
             services.TryAddSingleton<IHealthCheckService, HealthCheckService>();
             services.AddHostedService<HealthCheckWorker>();
+
             return new HealthChecksBuilder(services);
         }
     }
