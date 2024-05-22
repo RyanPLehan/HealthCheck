@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -32,7 +27,7 @@ namespace HealthCheck.Registration
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
             CreateRegistration(typeof(TService), HealthCheckType.Liveness, name);
-            _services.TryAddKeyedSingleton<TService>(HealthCheckType.Liveness);
+            _services.TryAddKeyedSingleton<IHealthCheck, TService>(HealthCheckType.Liveness);
             return this;
         }
 
@@ -49,7 +44,7 @@ namespace HealthCheck.Registration
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
             CreateRegistration(instance.GetType(), HealthCheckType.Liveness, name);
-            _services.TryAddKeyedSingleton(HealthCheckType.Liveness, instance);
+            _services.TryAddKeyedSingleton<IHealthCheck>(HealthCheckType.Liveness, instance);
             return this;
         }
         #endregion
@@ -67,7 +62,7 @@ namespace HealthCheck.Registration
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
             CreateRegistration(typeof(TService), HealthCheckType.Readiness, name);
-            _services.TryAddKeyedSingleton<TService>(HealthCheckType.Readiness);
+            _services.TryAddKeyedSingleton<IHealthCheck, TService>(HealthCheckType.Readiness);
             return this;
         }
 
@@ -84,7 +79,7 @@ namespace HealthCheck.Registration
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
             CreateRegistration(instance.GetType(), HealthCheckType.Readiness, name);
-            _services.TryAddKeyedSingleton(HealthCheckType.Readiness, instance);
+            _services.TryAddKeyedSingleton<IHealthCheck>(HealthCheckType.Readiness, instance);
             return this;
         }
         #endregion
@@ -102,7 +97,7 @@ namespace HealthCheck.Registration
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
             CreateRegistration(typeof(TService), HealthCheckType.Startup, name);
-            _services.TryAddKeyedSingleton<TService>(HealthCheckType.Startup);
+            _services.TryAddKeyedSingleton<IHealthCheck, TService>(HealthCheckType.Startup);
             return this;
         }
 
@@ -119,7 +114,7 @@ namespace HealthCheck.Registration
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
             CreateRegistration(instance.GetType(), HealthCheckType.Startup, name);
-            _services.TryAddKeyedSingleton(HealthCheckType.Startup, instance);
+            _services.TryAddKeyedSingleton<IHealthCheck>(HealthCheckType.Startup, instance);
             return this;
         }
         #endregion
@@ -137,7 +132,7 @@ namespace HealthCheck.Registration
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
             CreateRegistration(typeof(TService), HealthCheckType.Status, name);
-            _services.TryAddKeyedSingleton<TService>(HealthCheckType.Status);
+            _services.TryAddKeyedSingleton<IHealthCheck, TService>(HealthCheckType.Status);
             return this;
         }
 
@@ -154,7 +149,7 @@ namespace HealthCheck.Registration
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
             CreateRegistration(instance.GetType(), HealthCheckType.Status, name);
-            _services.TryAddKeyedSingleton(HealthCheckType.Status, instance);
+            _services.TryAddKeyedSingleton<IHealthCheck>(HealthCheckType.Status, instance);
             return this;
         }
         #endregion
@@ -169,7 +164,7 @@ namespace HealthCheck.Registration
                 Name = name,
             };
 
-            RegistrationRepo.Add(registration);
+            RegistrationRepository.Add(registration);
 
             return registration;
         }

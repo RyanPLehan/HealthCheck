@@ -5,9 +5,9 @@ namespace HealthCheck.Configuration
 {
     public class HealthCheckOptions
     {
-        ListenerOptions Status{ get; set; }
-        ListenerOptions Startup { get; set; }
-        ListenerOptions Readiness { get; set; }
-        ListenerOptions Liveness { get; set; }
+        public StatusListenerOptions? Status { get; set; }
+        public ProbeListenerOptions? Startup { get; set; }
+        public ProbeListenerOptions? Readiness { get; set; }
+        public ProbeListenerOptions? Liveness { get; set; }
     }
 }

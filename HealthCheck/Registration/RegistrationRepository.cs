@@ -10,7 +10,7 @@ namespace HealthCheck.Registration
     /// <remarks>
     /// Nothing fancy is needed, not even memory caching, because it should be a one time set with multiple gets
     /// </remarks>
-    internal static class RegistrationRepo
+    internal static class RegistrationRepository
     {
         private static ConcurrentDictionary<Tuple<string, HealthCheckType>, HealthCheckRegistration> _dict = 
             new ConcurrentDictionary<Tuple<string, HealthCheckType>, HealthCheckRegistration>();

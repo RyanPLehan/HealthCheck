@@ -60,7 +60,7 @@ namespace HealthCheck
             // Make it simple and iterate one at a time
             foreach (IHealthCheck service in services)
             {
-                HealthCheckRegistration? registration = RegistrationRepo.Get(service.GetType(), healthCheckType);
+                HealthCheckRegistration? registration = RegistrationRepository.Get(service.GetType(), healthCheckType);
                 HealthCheckResult result = HealthCheckResult.Unhealthy();
                 string name = registration?.Name ?? NO_REGISTRATION_NAME;
 

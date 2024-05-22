@@ -8,7 +8,6 @@ namespace HealthCheck
 {
     public class HealthCheckWorker : BackgroundService
     {
-        public const string CONFIGURATION_SECTION = "HealthCheck";
         private readonly ILogger<HealthCheckWorker> _logger;
         private readonly IHealthCheckService _healthCheckService;
         private readonly HealthCheckOptions _options;
@@ -24,10 +23,9 @@ namespace HealthCheck
 
             _logger = logger;
             _healthCheckService = healthCheckService;
-            _options = LoadOptions(configuration) ??
-                throw new Exception("Unable to load 'HealthCheck' settings");
+            _options = HealthCheckOptionsBuilder.Build(configuration) ??
+                throw new Exception($"Unable to load settings from section '{HealthCheckOptionsBuilder.CONFIGURATION_SECTION}'");
         }
-
 
 
         internal HealthCheckWorker(ILogger<HealthCheckWorker> logger,
@@ -74,13 +72,6 @@ namespace HealthCheck
             _logger.LogInformation("Stopping: Health Check Worker");
 
             return base.StopAsync(cancellationToken);
-        }
-
-        private HealthCheckOptions LoadOptions(IConfiguration configuration)
-        {
-            HealthCheckOptions options = new HealthCheckOptions();
-            configuration.GetSection(CONFIGURATION_SECTION).Bind(options);
-            return options;
         }
     }
 }

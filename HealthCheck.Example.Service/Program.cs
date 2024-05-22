@@ -26,7 +26,7 @@ namespace HealthCheck.Example.Service
 
         private static IServiceCollection ConfigureServices(IServiceCollection services)
         {
-            services.Add
+            services.AddHealthChecks();
             return services;
         }
 
