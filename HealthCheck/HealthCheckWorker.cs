@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using HealthCheck.Extensions;
 
 namespace HealthCheck
 {
@@ -62,9 +63,20 @@ namespace HealthCheck
 
         public override Task StartAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Starting: Health Check Worker");
+            Task task;
+            try
+            {
+                ValidateOptions();
+                _logger.LogInformation("Starting: Health Check Worker");
+                task = base.StartAsync(cancellationToken);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex,"Health Check Worker failed to start");
+                task = Task.FromException(ex);
+            }
 
-            return base.StartAsync(cancellationToken);
+            return task;
         }
 
         public override Task StopAsync(CancellationToken cancellationToken)
@@ -73,5 +85,22 @@ namespace HealthCheck
 
             return base.StopAsync(cancellationToken);
         }
+
+
+        /// <summary>
+        /// Validate Options
+        /// </summary>
+        /// <remarks>
+        /// Make sure we do not have overlapping ports with different probe types
+        /// </remarks>
+        private void ValidateOptions()
+        {
+            IDictionary<int, HealthCheckProbeType> dict = new Dictionary<int, HealthCheckProbeType>();
+
+
+
+
+        }
+
     }
 }

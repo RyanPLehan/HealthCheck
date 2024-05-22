@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.Extensions.Configuration;
+using HealthCheck.Asserts;
 
 
 namespace HealthCheck.Configuration
@@ -59,7 +60,7 @@ namespace HealthCheck.Configuration
         /// </remarks>
         public void AddStatus(int port, string endpoint)
         {
-            AssertPort(port, nameof(port));
+            HealthCheckOptionsAssert.AssertNotValidPort(port, nameof(port));
             ArgumentException.ThrowIfNullOrWhiteSpace(endpoint, nameof(endpoint));
             
             _statusOptions = new StatusListenerOptions()
@@ -76,7 +77,7 @@ namespace HealthCheck.Configuration
         /// <param name="endpoint"></param>
         public void AddHttpStartup(int port, string endpoint)
         {
-            AssertPort(port, nameof(port));
+            HealthCheckOptionsAssert.AssertNotValidPort(port, nameof(port));
             ArgumentException.ThrowIfNullOrWhiteSpace(endpoint, nameof(endpoint));
 
             _startupOptions =new ProbeListenerOptions()
@@ -94,7 +95,7 @@ namespace HealthCheck.Configuration
         /// <param name="endpoint"></param>
         public void AddHttpReadiness(int port, string endpoint)
         {
-            AssertPort(port, nameof(port));
+            HealthCheckOptionsAssert.AssertNotValidPort(port, nameof(port));
             ArgumentException.ThrowIfNullOrWhiteSpace(endpoint, nameof(endpoint));
 
             _readinessOptions =new ProbeListenerOptions()
@@ -112,7 +113,7 @@ namespace HealthCheck.Configuration
         /// <param name="endpoint"></param>
         public void AddHttpLiveness(int port, string endpoint)
         {
-            AssertPort(port, nameof(port));
+            HealthCheckOptionsAssert.AssertNotValidPort(port, nameof(port));
             ArgumentException.ThrowIfNullOrWhiteSpace(endpoint, nameof(endpoint));
 
             _livenessOptions =new ProbeListenerOptions()
@@ -129,7 +130,7 @@ namespace HealthCheck.Configuration
         /// <param name="port"></param>
         public void AddTcpStartup(int port)
         {
-            AssertPort(port, nameof(port));
+            HealthCheckOptionsAssert.AssertNotValidPort(port, nameof(port));
 
             _startupOptions =new ProbeListenerOptions()
             {
@@ -145,7 +146,7 @@ namespace HealthCheck.Configuration
         /// <param name="port"></param>
         public void AddTcpReadiness(int port)
         {
-            AssertPort(port, nameof(port));
+            HealthCheckOptionsAssert.AssertNotValidPort(port, nameof(port));
 
             _readinessOptions =new ProbeListenerOptions()
             {
@@ -161,7 +162,7 @@ namespace HealthCheck.Configuration
         /// <param name="port"></param>
         public void AddTcpLiveness(int port)
         {
-            AssertPort(port, nameof(port));
+            HealthCheckOptionsAssert.AssertNotValidPort(port, nameof(port));
 
             _livenessOptions =new ProbeListenerOptions()
             {
@@ -169,12 +170,6 @@ namespace HealthCheck.Configuration
                 Port = port,
                 EndPoint = null,
             };
-        }
-
-        private static void AssertPort(int port, string? paramName)
-        {
-            if (port < 0 || port > 65535)
-                throw new ArgumentException("Port number must be between 0 and 65535", paramName);
         }
     }
 }
