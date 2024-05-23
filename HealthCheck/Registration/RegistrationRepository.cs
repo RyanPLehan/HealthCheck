@@ -16,6 +16,10 @@ namespace HealthCheck.Registration
             new ConcurrentDictionary<Tuple<string, HealthCheckType>, HealthCheckRegistration>();
 
 
+        public static void Add(HealthCheckRegistration registration)
+            => _dict.TryAdd(CreateKey(registration.Type, registration.HealthCheckType), registration);
+
+
         public static HealthCheckRegistration? Get<T>(HealthCheckType healthCheckType)
             => Get(typeof(T), healthCheckType);
 
@@ -23,8 +27,12 @@ namespace HealthCheck.Registration
             => _dict.GetValueOrDefault(CreateKey(type, healthCheckType), null);
 
 
-        public static void Add(HealthCheckRegistration registration)
-            => _dict.TryAdd(CreateKey(registration.Type, registration.HealthCheckType), registration);
+        public static void Remove<T>(HealthCheckType healthCheckType)
+            => Remove(typeof(T), healthCheckType);
+
+        public static void Remove(Type type, HealthCheckType healthCheckType)
+            => _dict.Remove(CreateKey(type, healthCheckType), out HealthCheckRegistration value);
+
 
         private static Tuple<string, HealthCheckType> CreateKey(Type type, HealthCheckType healthCheckType)
             => new Tuple<string, HealthCheckType>(type.AssemblyQualifiedName, healthCheckType);

@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using HealthCheck.DefaultChecks;
 
 namespace HealthCheck.Registration
 {
@@ -12,7 +13,11 @@ namespace HealthCheck.Registration
             services.TryAddSingleton<IHealthCheckService, HealthCheckService>();
             services.AddHostedService<HealthCheckWorker>();
 
-            return new HealthChecksBuilder(services);
+            return new HealthChecksBuilder(services)
+                    .AddCheckStatus<StatusCheck>("Default Status Check")
+                    .AddCheckStartup<StartupCheck>("Default Startup Check")
+                    .AddCheckReadiness<ReadinessCheck>("Default Readiness Check")
+                    .AddCheckLiveness<LivenessCheck>("Default Liveness Check");
         }
     }
 }

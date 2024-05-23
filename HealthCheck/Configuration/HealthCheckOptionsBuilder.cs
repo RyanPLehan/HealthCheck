@@ -9,9 +9,9 @@ namespace HealthCheck.Configuration
     {
         public const string CONFIGURATION_SECTION = "HealthCheck";
         private StatusListenerOptions _statusOptions = null;
-        private ProbeListenerOptions _startupOptions = null;
-        private ProbeListenerOptions _readinessOptions = null;
-        private ProbeListenerOptions _livenessOptions = null;
+        private ProbeOptions _startupOptions = null;
+        private ProbeOptions _readinessOptions = null;
+        private ProbeOptions _livenessOptions = null;
 
         /// <summary>
         /// Load options from configuration file using default section name
@@ -80,7 +80,7 @@ namespace HealthCheck.Configuration
             HealthCheckOptionsAssert.AssertNotValidPort(port, nameof(port));
             ArgumentException.ThrowIfNullOrWhiteSpace(endpoint, nameof(endpoint));
 
-            _startupOptions =new ProbeListenerOptions()
+            _startupOptions =new ProbeOptions()
             {
                 HealthCheckProbeType = HealthCheckProbeType.Http,
                 Port = port,
@@ -98,7 +98,7 @@ namespace HealthCheck.Configuration
             HealthCheckOptionsAssert.AssertNotValidPort(port, nameof(port));
             ArgumentException.ThrowIfNullOrWhiteSpace(endpoint, nameof(endpoint));
 
-            _readinessOptions =new ProbeListenerOptions()
+            _readinessOptions =new ProbeOptions()
             {
                 HealthCheckProbeType = HealthCheckProbeType.Http,
                 Port = port,
@@ -116,7 +116,7 @@ namespace HealthCheck.Configuration
             HealthCheckOptionsAssert.AssertNotValidPort(port, nameof(port));
             ArgumentException.ThrowIfNullOrWhiteSpace(endpoint, nameof(endpoint));
 
-            _livenessOptions =new ProbeListenerOptions()
+            _livenessOptions =new ProbeOptions()
             {
                 HealthCheckProbeType = HealthCheckProbeType.Http,
                 Port = port,
@@ -132,7 +132,7 @@ namespace HealthCheck.Configuration
         {
             HealthCheckOptionsAssert.AssertNotValidPort(port, nameof(port));
 
-            _startupOptions =new ProbeListenerOptions()
+            _startupOptions =new ProbeOptions()
             {
                 HealthCheckProbeType = HealthCheckProbeType.Tcp,
                 Port = port,
@@ -148,7 +148,7 @@ namespace HealthCheck.Configuration
         {
             HealthCheckOptionsAssert.AssertNotValidPort(port, nameof(port));
 
-            _readinessOptions =new ProbeListenerOptions()
+            _readinessOptions =new ProbeOptions()
             {
                 HealthCheckProbeType = HealthCheckProbeType.Tcp,
                 Port = port,
@@ -164,7 +164,7 @@ namespace HealthCheck.Configuration
         {
             HealthCheckOptionsAssert.AssertNotValidPort(port, nameof(port));
 
-            _livenessOptions =new ProbeListenerOptions()
+            _livenessOptions =new ProbeOptions()
             {
                 HealthCheckProbeType = HealthCheckProbeType.Tcp,
                 Port = port,

@@ -6,9 +6,9 @@ namespace HealthCheck.Configuration
     public class HealthCheckOptions
     {
         public StatusListenerOptions? Status { get; set; }
-        public ProbeListenerOptions? Startup { get; set; }
-        public ProbeListenerOptions? Readiness { get; set; }
-        public ProbeListenerOptions? Liveness { get; set; }
+        public ProbeOptions? Startup { get; set; }
+        public ProbeOptions? Readiness { get; set; }
+        public ProbeOptions? Liveness { get; set; }
 
         internal IEnumerable<ListenerOptions> Listeners
         {

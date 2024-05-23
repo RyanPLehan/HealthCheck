@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using HealthCheck.DefaultChecks;
 
 namespace HealthCheck.Registration
 {
@@ -131,6 +133,11 @@ namespace HealthCheck.Registration
         {
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
+            // If dev adds their own check status, remove default status check
+            // Only because the default status check returns Unhealthy
+            RemoveService<StatusCheck>();
+            RemoveRegistration<StatusCheck>(HealthCheckType.Status);
+
             CreateRegistration(typeof(TService), HealthCheckType.Status, name);
             _services.TryAddKeyedSingleton<IHealthCheck, TService>(HealthCheckType.Status);
             return this;
@@ -148,11 +155,19 @@ namespace HealthCheck.Registration
             ArgumentNullException.ThrowIfNull(instance, nameof(instance));
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
+            // If dev adds their own check status, remove default status check
+            // Only because the default status check returns Unhealthy
+            RemoveService<StatusCheck>();
+            RemoveRegistration<StatusCheck>(HealthCheckType.Status);
+
             CreateRegistration(instance.GetType(), HealthCheckType.Status, name);
             _services.TryAddKeyedSingleton<IHealthCheck>(HealthCheckType.Status, instance);
             return this;
         }
         #endregion
+
+        private HealthCheckRegistration CreateRegistration<T>(HealthCheckType healthCheckType, string name)
+            => CreateRegistration(typeof(T), healthCheckType, name);
 
 
         private HealthCheckRegistration CreateRegistration(Type type, HealthCheckType healthCheckType, string name)
@@ -167,6 +182,27 @@ namespace HealthCheck.Registration
             RegistrationRepository.Add(registration);
 
             return registration;
+        }
+
+        private void RemoveRegistration<T>(HealthCheckType healthCheckType)
+            => RemoveRegistration(typeof(T), healthCheckType);
+
+        private void RemoveRegistration(Type type, HealthCheckType healthCheckType)
+        {
+            RegistrationRepository.Remove(type, healthCheckType);
+        }
+
+        private void RemoveService<T>()
+            => RemoveService(typeof(T));
+
+        private void RemoveService(Type type)
+        {
+            if (_services.IsReadOnly)
+                throw new ReadOnlyException("ServiceCollection is read only");
+
+            var serviceDescriptor = _services.FirstOrDefault(descriptor => descriptor.ServiceType == type);
+            if (serviceDescriptor != null) 
+                _services.Remove(serviceDescriptor);
         }
     }
 }
