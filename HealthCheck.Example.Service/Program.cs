@@ -19,19 +19,18 @@ namespace HealthCheck.Example.Service
 
         private static IServiceCollection ConfigureOptions(ConfigurationManager configuration, IServiceCollection services)
         {
-            // Explicity Set Configuration
-            // services.Configure<HealthCheckOptions>(configuration.GetSection(HealthCheckWorker.CONFIGURATION_SECTION));
             return services;
         }
 
         private static IServiceCollection ConfigureServices(IServiceCollection services)
         {
-            services.AddHealthChecks();
+            services.AddHealthChecks();     // Auto adds default checks
             return services;
         }
 
         private static IServiceCollection ConfigureWorkers(IServiceCollection services)
         {
+            services.AddHostedService<Worker>();
             return services;
         }
     }

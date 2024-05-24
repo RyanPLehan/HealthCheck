@@ -13,9 +13,9 @@ namespace HealthCheck
         private readonly HealthCheckOptions _options;
 
 
-        internal HealthCheckWorker(ILogger<HealthCheckWorker> logger,
-                                   IHealthCheckService healthCheckService,
-                                   IConfiguration configuration)
+        public HealthCheckWorker(ILogger<HealthCheckWorker> logger,
+                                 IHealthCheckService healthCheckService,
+                                 IConfiguration configuration)
         {
             ArgumentNullException.ThrowIfNull(logger, nameof(logger));
             ArgumentNullException.ThrowIfNull(healthCheckService, nameof(healthCheckService));
@@ -28,24 +28,18 @@ namespace HealthCheck
         }
 
 
-        //internal HealthCheckWorker(ILogger<HealthCheckWorker> logger,
-        //                           IHealthCheckService healthCheckService,
-        //                           IOptions<HealthCheckOptions> options)
-        //    : this(logger, healthCheckService, options.Value)
-        //{ }
+        public HealthCheckWorker(ILogger<HealthCheckWorker> logger,
+                                 IHealthCheckService healthCheckService,
+                                 HealthCheckOptions options)
+        {
+            ArgumentNullException.ThrowIfNull(logger, nameof(logger));
+            ArgumentNullException.ThrowIfNull(healthCheckService, nameof(healthCheckService));
+            ArgumentNullException.ThrowIfNull(options, nameof(options));
 
-        //internal HealthCheckWorker(ILogger<HealthCheckWorker> logger,
-        //                           IHealthCheckService healthCheckService,
-        //                           HealthCheckOptions options )
-        //{
-        //    ArgumentNullException.ThrowIfNull(logger, nameof(logger));
-        //    ArgumentNullException.ThrowIfNull(healthCheckService, nameof(healthCheckService));
-        //    ArgumentNullException.ThrowIfNull(options, nameof(options));
-
-        //    _logger = logger;
-        //    _healthCheckService = healthCheckService;
-        //    _options = options;
-        //}
+            _logger = logger;
+            _healthCheckService = healthCheckService;
+            _options = options;
+        }
 
 
         public override Task StartAsync(CancellationToken cancellationToken)
@@ -80,7 +74,7 @@ namespace HealthCheck
 
                 if (_logger.IsEnabled(LogLevel.Information))
                 {
-                    _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+                    _logger.LogInformation("Health Check Worker running at: {time}", DateTimeOffset.Now);
                 }
                 await Task.Delay(1000, stoppingToken);
             }
@@ -88,12 +82,6 @@ namespace HealthCheck
 
 
 
-        /// <summary>
-        /// Validate Options
-        /// </summary>
-        /// <remarks>
-        /// Make sure we do not have overlapping ports with different probe types
-        /// </remarks>
         private void ValidateOptions()
         {
             Asserts.HealthCheckOptionsAssert.AssertNoProbesConfigured(this._options);
