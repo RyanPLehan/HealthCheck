@@ -3,9 +3,9 @@ namespace HealthCheck
 {
     public enum HealthCheckType: int
     {
-        Status = 0,
-        Startup = 1,
-        Readiness = 2,
-        Liveness = 3,
+        Status = 1,
+        Startup = 2,
+        Readiness = 3,
+        Liveness = 4,
     }
 }

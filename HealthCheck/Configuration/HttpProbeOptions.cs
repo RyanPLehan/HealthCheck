@@ -1,23 +1,19 @@
-﻿using System;
+﻿using HealthCheck;
+using System;
 
 namespace HealthCheck.Configuration
 {
-    public class HttpProbeOptions : ProbeOptions
+    public class HttpProbeOptions
     {
-        public HttpProbeOptions()
-        {
-            // Set Default Port
-            this.Port = 8080;
-            this.HealthCheckProbeType = HealthCheckProbeType.Http;
-        }
+        public int Port { get; set; } = 8080;
+        public EndpointAssignment Endpoints { get; set; }
+    }
 
-        public IDictionary<HealthCheckType, string> EndPoints { get; set; }
-            = new Dictionary<HealthCheckType, string>()
-            {
-                {HealthCheckType.Status, "health/status"},
-                {HealthCheckType.Startup, "health/startup"},
-                {HealthCheckType.Readiness, "health/readiness"},
-                {HealthCheckType.Liveness, "health/liveness"},
-            };
+    public class EndpointAssignment
+    {
+        public string Status { get; set; } = "health/status";
+        public string Startup { get; set; } = "health/startup";
+        public string Readiness { get; set; } = "health/readiness";
+        public string Liveness { get; set; } = "health/liveness";
     }
 }

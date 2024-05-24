@@ -2,13 +2,15 @@
 
 namespace HealthCheck.Configuration
 {
-    public class TcpProbeOptions : ProbeOptions
+    public class TcpProbeOptions
     {
-        public TcpProbeOptions()
-        {
-            // Set Default Port
-            this.Port = 8081;
-            this.HealthCheckProbeType = HealthCheckProbeType.Tcp;
-        }
+        public PortAssignment Ports { get; set; }
+    }
+
+    public class PortAssignment
+    {
+        public int? Startup { get; set; } = null;
+        public int? Readiness { get; set; } = null;
+        public int? Liveness { get; set; } = null;
     }
 }

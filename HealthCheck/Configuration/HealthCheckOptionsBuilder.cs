@@ -8,10 +8,10 @@ namespace HealthCheck.Configuration
     public class HealthCheckOptionsBuilder
     {
         public const string CONFIGURATION_SECTION = "HealthCheck";
-        private StatusListenerOptions _statusOptions = null;
-        private ProbeOptions _startupOptions = null;
-        private ProbeOptions _readinessOptions = null;
-        private ProbeOptions _livenessOptions = null;
+        private ProbeLoggingOptions _loggingOptions = null;
+        private HttpProbeOptions _httpOptions = null;
+        private TcpProbeOptions _tcpOptions = null;
+
 
         /// <summary>
         /// Load options from configuration file using default section name
@@ -43,132 +43,84 @@ namespace HealthCheck.Configuration
         {
             return new HealthCheckOptions()
             {
-                Status = _statusOptions,
-                Startup = _startupOptions,
-                Readiness = _readinessOptions,
-                Liveness = _livenessOptions,
+                Logging = _loggingOptions,
+                HttpProbe = _httpOptions,
+                TcpProbe = _tcpOptions,
             };
         }
 
         /// <summary>
-        /// Add Status listener information
+        /// Add Logging
+        /// </summary>
+        /// <param name="logProbe"></param>
+        /// <param name="logStatusWhenHealthy"></param>
+        /// <param name="logStatusWhenNotHealthy"></param>
+        public void AddLogging(bool logProbe = true,
+                               bool logStatusWhenHealthy = false,
+                               bool logStatusWhenNotHealthy = true)
+        {
+            _loggingOptions = new ProbeLoggingOptions()
+            {
+                LogProbe = logProbe,
+                LogStatusWhenHealthy = logStatusWhenHealthy,
+                LogStatusWhenNotHealthy = logStatusWhenNotHealthy
+            };
+        }
+
+
+        /// <summary>
+        /// Add Http Probe
         /// </summary>
         /// <param name="port"></param>
-        /// <param name="endpoint"></param>
+        /// <param name="statusEndpoint"></param>
+        /// <param name="startupEndpoint"></param>
+        /// <param name="readinessEndpoint"></param>
+        /// <param name="livenessEndpoint"></param>
         /// <remarks>
-        /// Health Check Status will always be via HTTP
+        /// If there is a specific probe that is not warranted, just set to null
+        /// A blank endpoint or "/" will be the root
         /// </remarks>
-        public void AddStatus(int port, string endpoint)
+        public void AddHttpProbe(int port = 8080,
+                                 string statusEndpoint = "health/status",
+                                 string startupEndpoint = "health/startup",
+                                 string readinessEndpoint = "health/readiness",
+                                 string livenessEndpoint = "health/liveness")
         {
-            HealthCheckOptionsAssert.AssertNotValidPort(port, nameof(port));
-            ArgumentException.ThrowIfNullOrWhiteSpace(endpoint, nameof(endpoint));
-            
-            _statusOptions = new StatusListenerOptions()
+            _httpOptions = new HttpProbeOptions()
             {
                 Port = port,
-                EndPoint = endpoint,
+                Endpoints = new EndpointAssignment()
+                {
+                    Status = statusEndpoint,
+                    Startup = startupEndpoint,
+                    Readiness = readinessEndpoint,
+                    Liveness = livenessEndpoint,
+                },
             };
         }
 
         /// <summary>
-        /// Add HTTP Startup Probe listener information
+        /// Add Tcp Probe
         /// </summary>
-        /// <param name="port"></param>
-        /// <param name="endpoint"></param>
-        public void AddHttpStartup(int port, string endpoint)
+        /// <param name="startupPort"></param>
+        /// <param name="readinessPort"></param>
+        /// <param name="livenessPort"></param>
+        /// <remarks>
+        /// If there is a specific probe that is not warranted, set the port to null
+        /// Tcp ports must not match Http Port, if http probe is being used 
+        /// </remarks>
+        public void AddTcpProbe(int? startupPort = 8081,
+                                int? readinessPort = 8081,
+                                int? livenessPort = 8081)
         {
-            HealthCheckOptionsAssert.AssertNotValidPort(port, nameof(port));
-            ArgumentException.ThrowIfNullOrWhiteSpace(endpoint, nameof(endpoint));
-
-            _startupOptions =new ProbeOptions()
+            _tcpOptions = new TcpProbeOptions()
             {
-                HealthCheckProbeType = HealthCheckProbeType.Http,
-                Port = port,
-                EndPoint = endpoint,
-            };
-        }
-
-        /// <summary>
-        /// Add HTTP Readiness Probe listener information
-        /// </summary>
-        /// <param name="port"></param>
-        /// <param name="endpoint"></param>
-        public void AddHttpReadiness(int port, string endpoint)
-        {
-            HealthCheckOptionsAssert.AssertNotValidPort(port, nameof(port));
-            ArgumentException.ThrowIfNullOrWhiteSpace(endpoint, nameof(endpoint));
-
-            _readinessOptions =new ProbeOptions()
-            {
-                HealthCheckProbeType = HealthCheckProbeType.Http,
-                Port = port,
-                EndPoint = endpoint,
-            };
-        }
-
-        /// <summary>
-        /// Add HTTP Liveness Probe listener information
-        /// </summary>
-        /// <param name="port"></param>
-        /// <param name="endpoint"></param>
-        public void AddHttpLiveness(int port, string endpoint)
-        {
-            HealthCheckOptionsAssert.AssertNotValidPort(port, nameof(port));
-            ArgumentException.ThrowIfNullOrWhiteSpace(endpoint, nameof(endpoint));
-
-            _livenessOptions =new ProbeOptions()
-            {
-                HealthCheckProbeType = HealthCheckProbeType.Http,
-                Port = port,
-                EndPoint = endpoint,
-            };
-        }
-
-        /// <summary>
-        /// Add TCP Startup Probe listener information
-        /// </summary>
-        /// <param name="port"></param>
-        public void AddTcpStartup(int port)
-        {
-            HealthCheckOptionsAssert.AssertNotValidPort(port, nameof(port));
-
-            _startupOptions =new ProbeOptions()
-            {
-                HealthCheckProbeType = HealthCheckProbeType.Tcp,
-                Port = port,
-                EndPoint = null,
-            };
-        }
-
-        /// <summary>
-        /// Add TCP Readiness Probe listener information
-        /// </summary>
-        /// <param name="port"></param>
-        public void AddTcpReadiness(int port)
-        {
-            HealthCheckOptionsAssert.AssertNotValidPort(port, nameof(port));
-
-            _readinessOptions =new ProbeOptions()
-            {
-                HealthCheckProbeType = HealthCheckProbeType.Tcp,
-                Port = port,
-                EndPoint = null,
-            };
-        }
-
-        /// <summary>
-        /// Add TCP Liveness Probe listener information
-        /// </summary>
-        /// <param name="port"></param>
-        public void AddTcpLiveness(int port)
-        {
-            HealthCheckOptionsAssert.AssertNotValidPort(port, nameof(port));
-
-            _livenessOptions =new ProbeOptions()
-            {
-                HealthCheckProbeType = HealthCheckProbeType.Tcp,
-                Port = port,
-                EndPoint = null,
+                Ports = new PortAssignment()
+                {
+                    Startup = startupPort,
+                    Readiness = readinessPort,
+                    Liveness = livenessPort,
+                },
             };
         }
     }
