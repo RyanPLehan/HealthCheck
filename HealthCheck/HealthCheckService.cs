@@ -49,6 +49,11 @@ namespace HealthCheck
             return await ExecuteServices(HealthCheckType.Status, cancellationToken);
         }
 
+        public T GetProbeService<T>()
+        {
+            return (T)_serviceProvider.GetRequiredService(typeof(T));
+        }
+
         private async Task<IEnumerable<KeyValuePair<string, HealthCheckResult>>> ExecuteServices(HealthCheckType healthCheckType,
                                                                                                  CancellationToken cancellationToken)
         {

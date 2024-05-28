@@ -11,9 +11,28 @@ namespace HealthCheck.Configuration
 
     public class EndpointAssignment
     {
-        public string Status { get; set; } = "health/status";
-        public string Startup { get; set; } = "health/startup";
-        public string Readiness { get; set; } = "health/readiness";
-        public string Liveness { get; set; } = "health/liveness";
+        public string? Status { get; set; }
+        public string? Startup { get; set; }
+        public string? Readiness { get; set; }
+        public string? Liveness { get; set; }
+
+        internal IDictionary<HealthCheckType, string> ToDictionary()
+        {
+            IDictionary<HealthCheckType, string> ret = new Dictionary<HealthCheckType, string>();
+
+            if (!String.IsNullOrWhiteSpace(Status))
+                ret.Add(HealthCheckType.Status, Status);
+
+            if (!String.IsNullOrWhiteSpace(Startup))
+                ret.Add(HealthCheckType.Startup, Startup);
+
+            if (!String.IsNullOrWhiteSpace(Readiness))
+                ret.Add(HealthCheckType.Readiness, Readiness);
+
+            if (!String.IsNullOrWhiteSpace(Liveness))
+                ret.Add(HealthCheckType.Liveness, Liveness);
+
+            return ret;
+        }
     }
 }
