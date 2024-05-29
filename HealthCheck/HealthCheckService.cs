@@ -29,33 +29,34 @@ namespace HealthCheck
         }
 
 
-        public async Task<IEnumerable<KeyValuePair<string, HealthCheckResult>>> CheckLiveness(CancellationToken cancellationToken = default)
+        public async Task<HealthCheckOverallStatus> CheckLiveness(CancellationToken cancellationToken = default)
         {
-            return await ExecuteServices(HealthCheckType.Liveness, cancellationToken);
+            return await ExecuteCheckServices(HealthCheckType.Liveness, cancellationToken);
         }
 
-        public async Task<IEnumerable<KeyValuePair<string, HealthCheckResult>>> CheckReadiness(CancellationToken cancellationToken = default)
+        public async Task<HealthCheckOverallStatus> CheckReadiness(CancellationToken cancellationToken = default)
         {
-            return await ExecuteServices(HealthCheckType.Readiness, cancellationToken);
+            return await ExecuteCheckServices(HealthCheckType.Readiness, cancellationToken);
         }
 
-        public async Task<IEnumerable<KeyValuePair<string, HealthCheckResult>>> CheckStartup(CancellationToken cancellationToken = default)
+        public async Task<HealthCheckOverallStatus> CheckStartup(CancellationToken cancellationToken = default)
         {
-            return await ExecuteServices(HealthCheckType.Startup, cancellationToken);
+            return await ExecuteCheckServices(HealthCheckType.Startup, cancellationToken);
         }
 
-        public async Task<IEnumerable<KeyValuePair<string, HealthCheckResult>>> CheckStatus(CancellationToken cancellationToken = default)
+        public async Task<HealthCheckOverallStatus> CheckStatus(CancellationToken cancellationToken = default)
         {
-            return await ExecuteServices(HealthCheckType.Status, cancellationToken);
+            return await ExecuteCheckServices(HealthCheckType.Status, cancellationToken);
         }
+
+
 
         public T GetProbeService<T>()
         {
             return (T)_serviceProvider.GetRequiredService(typeof(T));
         }
 
-        private async Task<IEnumerable<KeyValuePair<string, HealthCheckResult>>> ExecuteServices(HealthCheckType healthCheckType,
-                                                                                                 CancellationToken cancellationToken)
+        public async Task<HealthCheckOverallStatus> ExecuteCheckServices(HealthCheckType healthCheckType, CancellationToken cancellationToken)
         {
             IList<KeyValuePair<string, HealthCheckResult>> results = new List<KeyValuePair<string, HealthCheckResult>>();
 
@@ -86,7 +87,19 @@ namespace HealthCheck
                 }
             }
 
-            return results;
+            return new HealthCheckOverallStatus(DetermineOverallStatus(results), results);
+        }
+
+        private HealthStatus DetermineOverallStatus(IEnumerable<KeyValuePair<string, HealthCheckResult>> results)
+        {
+            HealthStatus ret = HealthStatus.Healthy;
+
+            if (results.Any(kvp => kvp.Value.Status == HealthStatus.UnHealthy))
+                ret = HealthStatus.UnHealthy;
+            else if (results.Any(kvp => kvp.Value.Status == HealthStatus.Degraded))
+                ret = HealthStatus.Degraded;
+
+            return ret;
         }
     }
 }

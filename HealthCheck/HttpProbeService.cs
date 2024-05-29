@@ -11,32 +11,26 @@ using HealthCheck.Formatters;
 
 namespace HealthCheck
 {
+    /// <summary>
+    /// This will respond to HTTP probes using the given port by issuing HTTP 200 or HTTP 503 status codes
+    /// </summary>
+    /// <remarks>
+    /// This is a bare minimum HTTP Server that will specifically look for endpoints.
+    /// If a matching endpoint is found, then it will execute the Health Check services for the associated health check type
+    /// This is a typical Request/Response in that
+    /// a. A HTTP GET request is made to a specific end point
+    /// b. The endpoint is scanned to determine if it is a Health Check endpoint
+    /// c. Execution of one or more Health Checks for that endpoint is executed and compiled into a single object
+    /// d. If the endpoint is registered to Health Check Status Request, then the response will send a Json object of all Health Check Service Results
+    /// e. If the endpoint is registered to Health Check Startup, Readiness or Liveness then one of the following responses will be returned
+    ///     1.  HTTP 200 OK if ALL Health Check Services returns Healthy
+    ///     2.  HTTP 302 Service Unavailable if just ONE Health Check Service returns a Degraded or Unhealthy result
+    /// </remarks>
     internal class HttpProbeService : IHttpProbeService
     {
         private readonly ILogger<HttpProbeService> _logger;
         private readonly IHealthCheckService _healthCheckService;
 
-        private class HealthCheckOverallStatus
-        {
-            private readonly HealthStatus _healthStatus;
-            private readonly IEnumerable<KeyValuePair<string, HealthCheckResult>> _results;
-
-            public HealthCheckOverallStatus(HealthStatus healthStatus, IEnumerable<KeyValuePair<string, HealthCheckResult>> results)
-            {
-                _healthStatus = healthStatus;
-                _results = results;
-            }
-
-            [JsonIgnore(Condition = JsonIgnoreCondition.Always)]
-            public HealthStatus HealthStatus 
-                { get => _healthStatus; }
-            
-            public string OverallStatus 
-                { get => _healthStatus.ToString(); }
-
-            public IEnumerable<KeyValuePair<string, string>> HealthChecks 
-                { get => _results.Select(kvp => new KeyValuePair<string, string>(kvp.Key, kvp.Value.Status.ToString())); }
-        }
 
         public HttpProbeService(ILogger<HttpProbeService> logger,
                                 IHealthCheckService healthCheckService)
@@ -50,7 +44,6 @@ namespace HealthCheck
 
         public async Task Monitor(HttpProbeOptions probeOptions, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
         {
-            Task task = Task.CompletedTask;
             IDictionary<HealthCheckType, string> healthCheckEndpoints = CreateHealthCheckEndpointDictionary(probeOptions.Endpoints);
 
             try
@@ -68,13 +61,14 @@ namespace HealthCheck
                                 HealthCheckType healthCheckType = GetHealthCheckType(endpoint, healthCheckEndpoints);
                                 if (healthCheckType != HealthCheckType.Unknown)
                                 {
+                                    LogProbe(loggingOptions, healthCheckType);
                                     HealthCheckOverallStatus healthCheckOverallStatus = await ProcessHealthCheck(client, healthCheckType, cancellationToken);
-                                    LogHealthCheck(loggingOptions, healthCheckType, healthCheckOverallStatus);
+                                    LogHealthCheck(loggingOptions, healthCheckOverallStatus);
                                 }
                             }
                             catch(Exception ex)
                             {
-                                _logger.LogError(ex, "Health Check failed when processing request");
+                                _logger.LogError(ex, "Http Probe Service failed when processing request");
                             }
                         }
                     }
@@ -82,22 +76,22 @@ namespace HealthCheck
             }
 
             catch (OperationCanceledException ex)
-            {
-                task = Task.CompletedTask;
-            }
+            { }
             
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Http Probe Service encountered an error and is shutting down");
-                task = Task.FromException(ex);
             }
+
+
+            await Task.CompletedTask;
         }
 
 
         #region HTTP Request Processes
         private async Task<string> GetRequestedEndpoint(TcpClient client)
         {
-            const int BUFFER_SZIE = 500;
+            const int BUFFER_SZIE = 256;
             const string HTTP_GET = "GET";
             const char SPACE = ' ';
             const string DEFAULT_ENDPOINT = "/";
@@ -170,7 +164,8 @@ namespace HealthCheck
         }
         #endregion
 
-        #region Health Check Processes
+
+        #region HTTP Response Processes
         private IDictionary<HealthCheckType, string> CreateHealthCheckEndpointDictionary(EndpointAssignment endpointAssignment)
         {
             IDictionary<HealthCheckType, string> ret = new Dictionary<HealthCheckType, string>();
@@ -199,51 +194,9 @@ namespace HealthCheck
 
         private async Task<HealthCheckOverallStatus> ProcessHealthCheck(TcpClient client, HealthCheckType healthCheckType, CancellationToken cancellationToken)
         {
-            IEnumerable<KeyValuePair<string, HealthCheckResult>> results = await ExecuteHealthChecks(healthCheckType, cancellationToken);
-            HealthStatus overallHealthStatus = DetermineOverallStatus(results);
-            HealthCheckOverallStatus healthCheckOverallStatus = new HealthCheckOverallStatus(overallHealthStatus, results);
+            HealthCheckOverallStatus healthCheckOverallStatus = await _healthCheckService.ExecuteCheckServices(healthCheckType, cancellationToken);
             await SendResponse(client, healthCheckType, healthCheckOverallStatus, cancellationToken);
-
             return healthCheckOverallStatus;
-        }
-
-
-        private async Task<IEnumerable<KeyValuePair<string, HealthCheckResult>>> ExecuteHealthChecks(HealthCheckType healthCheckType, CancellationToken cancellationToken)
-        {
-            IEnumerable<KeyValuePair<string, HealthCheckResult>> results = Enumerable.Empty<KeyValuePair<string, HealthCheckResult>>();
-
-            switch (healthCheckType)
-            {
-                case HealthCheckType.Status:
-                    results = await _healthCheckService.CheckStatus(cancellationToken);
-                    break;
-
-                case HealthCheckType.Startup:
-                    results = await _healthCheckService.CheckStartup(cancellationToken);
-                    break;
-
-                case HealthCheckType.Readiness:
-                    results = await _healthCheckService.CheckReadiness(cancellationToken);
-                    break;
-
-                case HealthCheckType.Liveness:
-                    results = await _healthCheckService.CheckLiveness(cancellationToken);
-                    break;
-            }
-
-            return results;
-        }
-
-        private HealthStatus DetermineOverallStatus(IEnumerable<KeyValuePair<string, HealthCheckResult>> results)
-        {
-            HealthStatus ret = HealthStatus.Healthy;
-
-            if (results.Any(kvp => kvp.Value.Status == HealthStatus.UnHealthy))
-                ret = HealthStatus.UnHealthy;
-            else if (results.Any(kvp => kvp.Value.Status == HealthStatus.Degraded))
-                ret = HealthStatus.Degraded;
-
-            return ret;
         }
 
         private async Task SendResponse(TcpClient client, HealthCheckType healthCheckType, HealthCheckOverallStatus healthCheckOverallStatus, CancellationToken cancellationToken)
@@ -290,7 +243,7 @@ namespace HealthCheck
             {
                 sb.Append("Content-Length: 0");
                 sb.AppendLine();
-                sb.AppendLine();
+                sb.AppendLine();        // Must provide 2 \r\n
             }
 
 
@@ -298,11 +251,17 @@ namespace HealthCheck
         }
         #endregion
 
-        private void LogHealthCheck(ProbeLoggingOptions loggingOptions, HealthCheckType healthCheckType, HealthCheckOverallStatus healthCheckOverallStatus)
+
+        #region Logging
+        private void LogProbe(ProbeLoggingOptions loggingOptions, HealthCheckType healthCheckType)
         {
             if (loggingOptions.LogProbe)
                 _logger.LogInformation("Health Check Probe: {0}", healthCheckType.ToString());
+        }
 
+
+        private void LogHealthCheck(ProbeLoggingOptions loggingOptions, HealthCheckOverallStatus healthCheckOverallStatus)
+        {
             if (loggingOptions.LogStatusWhenHealthy &&
                 healthCheckOverallStatus.HealthStatus == HealthStatus.Healthy)
             {
@@ -311,10 +270,11 @@ namespace HealthCheck
 
             if (loggingOptions.LogStatusWhenNotHealthy &&
                 healthCheckOverallStatus.HealthStatus != HealthStatus.Healthy)
-            {                
+            {
                 _logger.LogWarning("Health Check Result: {0}", healthCheckOverallStatus.OverallStatus);
                 _logger.LogWarning("Health Check Detailed Results: {0}", Json.Serialize(healthCheckOverallStatus));
             }
         }
+        #endregion
     }
 }

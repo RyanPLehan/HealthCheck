@@ -6,11 +6,12 @@ namespace HealthCheck
 {
     public interface IHealthCheckService
     {
-        Task<IEnumerable<KeyValuePair<string,HealthCheckResult>>> CheckStatus(CancellationToken cancellationToken);
-        Task<IEnumerable<KeyValuePair<string, HealthCheckResult>>> CheckStartup(CancellationToken cancellationToken);
-        Task<IEnumerable<KeyValuePair<string, HealthCheckResult>>> CheckReadiness(CancellationToken cancellationToken);
-        Task<IEnumerable<KeyValuePair<string, HealthCheckResult>>> CheckLiveness(CancellationToken cancellationToken);
+        Task<HealthCheckOverallStatus> CheckStatus(CancellationToken cancellationToken);
+        Task<HealthCheckOverallStatus> CheckStartup(CancellationToken cancellationToken);
+        Task<HealthCheckOverallStatus> CheckReadiness(CancellationToken cancellationToken);
+        Task<HealthCheckOverallStatus> CheckLiveness(CancellationToken cancellationToken);
 
         internal T GetProbeService<T>();
+        internal Task<HealthCheckOverallStatus> ExecuteCheckServices(HealthCheckType healthCheckType, CancellationToken cancellationToken);
     }
 }

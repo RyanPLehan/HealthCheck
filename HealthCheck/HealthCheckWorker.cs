@@ -73,42 +73,10 @@ namespace HealthCheck
 
             IList<Task> tasks = new List<Task>();
             tasks.Add(StartHttpProbe(stoppingToken));
+            tasks.Add(StartTcpProbe(stoppingToken));
 
             await Task.WhenAll(tasks);
-            
-            //_logger.LogInformation("Running health checks");
-            //IEnumerable<KeyValuePair<string, HealthCheckResult>> results;
-            //results = await _healthCheckService.CheckStartup(stoppingToken);
-            //LogResults(results);
-            //results = await _healthCheckService.CheckReadiness(stoppingToken);
-            //LogResults(results);
-            //results = await _healthCheckService.CheckLiveness(stoppingToken);
-            //LogResults(results);
-            //results = await _healthCheckService.CheckStatus(stoppingToken);
-            //LogResults(results);
-
-
-
-
-            //while (!stoppingToken.IsCancellationRequested)
-            //{
-
-            //    if (_logger.IsEnabled(LogLevel.Information))
-            //    {
-            //        _logger.LogInformation("Health Check Worker running at: {time}", DateTimeOffset.Now);
-            //    }
-            //    await Task.Delay(1000, stoppingToken);
-            //}
         }
-
-
-        private void LogResults(IEnumerable<KeyValuePair<string, HealthCheckResult>> results)
-        {
-            foreach (KeyValuePair<string, HealthCheckResult> result in results)
-                _logger.LogInformation("Check {0} - Result {1}", result.Key, result.Value.Status.ToString());
-        }
-
-
 
         private void ValidateOptions()
         {
@@ -133,6 +101,12 @@ namespace HealthCheck
         {
             IHttpProbeService service = _healthCheckService.GetProbeService<IHttpProbeService>();
             return service.Monitor(_options.HttpProbe, _options.Logging, cancellationToken);
+        }
+
+        private Task StartTcpProbe(CancellationToken cancellationToken)
+        {
+            ITcpProbeService service = _healthCheckService.GetProbeService<ITcpProbeService>();
+            return service.Monitor(_options.TcpProbe, _options.Logging, cancellationToken);
         }
     }
 }

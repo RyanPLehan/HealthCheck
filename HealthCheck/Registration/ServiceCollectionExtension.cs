@@ -22,7 +22,7 @@ namespace HealthCheck.Registration
             services.AddMemoryCache();
             services.TryAddSingleton<IHealthCheckService, HealthCheckService>();
             services.TryAddSingleton<IHttpProbeService, HttpProbeService>();
-            //services.TryAddSingleton<ITcpProbeService, TcpProbeService>();
+            services.TryAddSingleton<ITcpProbeService, TcpProbeService>();
             services.AddHostedService<HealthCheckWorker>();
 
             return builder;
