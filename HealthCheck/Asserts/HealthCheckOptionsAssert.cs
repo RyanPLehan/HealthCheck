@@ -6,6 +6,13 @@ namespace HealthCheck.Asserts
 {
     internal static class HealthCheckOptionsAssert
     {
+        public static void AssertNotValidInterval(int seconds)
+        {
+            const int MAX_SECONDS = 30;
+            if (seconds < 0 || seconds > MAX_SECONDS)
+                throw new Exception("Interval value must be between 1 and 30 seconds");
+        }
+
         public static void AssertNotValidPort(int port)
         {
             if (port < 0 || port > 65535)

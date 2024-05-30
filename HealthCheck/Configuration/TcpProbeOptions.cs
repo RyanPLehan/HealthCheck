@@ -4,6 +4,7 @@ namespace HealthCheck.Configuration
 {
     public class TcpProbeOptions
     {
+        public byte CheckRetryIntervalInSeconds { get; set; } = 3;
         public PortAssignment Ports { get; set; }
     }
 

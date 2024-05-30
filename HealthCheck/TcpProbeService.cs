@@ -46,8 +46,6 @@ namespace HealthCheck
 
         public async Task Monitor(TcpProbeOptions probeOptions, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
         {
-            int intervalInSeconds = 3;
-
             // Yield so that caller can continue processing
             await Task.Yield();
 
@@ -55,22 +53,25 @@ namespace HealthCheck
             // Must wait for probe before going on to next one
             if (probeOptions.Ports.Startup != null)
             {
-                await ExecuteIntervalCheck(intervalInSeconds, HealthCheckType.Startup, loggingOptions, cancellationToken);
-                await MonitorOnce(probeOptions.Ports.Startup.Value, HealthCheckType.Startup, loggingOptions, cancellationToken);
+                // One Time Monitoring
+                await ExecuteIntervalCheck(probeOptions.CheckRetryIntervalInSeconds, HealthCheckType.Startup, loggingOptions, cancellationToken);
+                await MonitorPort(probeOptions.Ports.Startup.Value, HealthCheckType.Startup, loggingOptions, cancellationToken);
             }
 
             if (probeOptions.Ports.Readiness != null)
             {
-                await ExecuteIntervalCheck(intervalInSeconds, HealthCheckType.Readiness, loggingOptions, cancellationToken);
-                await MonitorOnce(probeOptions.Ports.Readiness.Value, HealthCheckType.Readiness, loggingOptions, cancellationToken);
+                // One Time Monitoring
+                await ExecuteIntervalCheck(probeOptions.CheckRetryIntervalInSeconds, HealthCheckType.Readiness, loggingOptions, cancellationToken);
+                await MonitorPort(probeOptions.Ports.Readiness.Value, HealthCheckType.Readiness, loggingOptions, cancellationToken);
             }
 
             if (probeOptions.Ports.Liveness != null)
             {
+                // Keep monitoring for duration of application
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    await ExecuteIntervalCheck(intervalInSeconds, HealthCheckType.Liveness, loggingOptions, cancellationToken);
-                    await MonitorOnce(probeOptions.Ports.Liveness.Value, HealthCheckType.Liveness, loggingOptions, cancellationToken);
+                    await ExecuteIntervalCheck(probeOptions.CheckRetryIntervalInSeconds, HealthCheckType.Liveness, loggingOptions, cancellationToken);
+                    await MonitorPort(probeOptions.Ports.Liveness.Value, HealthCheckType.Liveness, loggingOptions, cancellationToken);
                 }
             }
 
@@ -78,7 +79,7 @@ namespace HealthCheck
         }
 
 
-        private async Task<HealthCheckOverallStatus> ExecuteIntervalCheck(int intervalInSeconds, HealthCheckType healthCheckType, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
+        private async Task<HealthCheckOverallStatus> ExecuteIntervalCheck(byte intervalInSeconds, HealthCheckType healthCheckType, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
         {
             int intervalTimeInMS = intervalInSeconds * 1000;        // Convert from seconds to milliseconds
             HealthCheckOverallStatus healthCheckOverallStatus;
@@ -98,7 +99,7 @@ namespace HealthCheck
         }
 
 
-        private async Task MonitorOnce(int port, HealthCheckType healthCheckType, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
+        private async Task MonitorPort(int port, HealthCheckType healthCheckType, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
         {
             try
             {

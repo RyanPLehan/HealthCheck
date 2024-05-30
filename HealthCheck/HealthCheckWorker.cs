@@ -86,6 +86,9 @@ namespace HealthCheck
             if (_options.HttpProbe != null)
                 Asserts.HealthCheckOptionsAssert.AssertNotValidPort(_options.HttpProbe.Port);
 
+            if (_options.TcpProbe != null)
+                Asserts.HealthCheckOptionsAssert.AssertNotValidInterval(_options.TcpProbe.CheckRetryIntervalInSeconds);
+            
             if (_options.TcpProbe?.Ports.Startup != null)
                 Asserts.HealthCheckOptionsAssert.AssertNotValidPort(_options.TcpProbe.Ports.Startup.Value);
 

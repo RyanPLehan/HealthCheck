@@ -5,10 +5,9 @@ using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using System.Text;
-using System.Text.Json.Serialization;
-using System.Web;
 using HealthCheck.Configuration;
 using HealthCheck.Formatters;
+using System.Diagnostics.Eventing.Reader;
 
 namespace HealthCheck
 {
@@ -29,6 +28,7 @@ namespace HealthCheck
     /// </remarks>
     internal class HttpProbeService : IHttpProbeService
     {
+        private const int MAX_REQUEST_MESSAGE_SIZE = 1024;
         private readonly ILogger<HttpProbeService> _logger;
         private readonly IHealthCheckService _healthCheckService;
 
@@ -60,15 +60,37 @@ namespace HealthCheck
                         {
                             try
                             {
-                                string endpoint = await GetRequestedEndpoint(client);
-                                HealthCheckType healthCheckType = GetHealthCheckType(endpoint, healthCheckEndpoints);
-                                if (healthCheckType != HealthCheckType.Unknown)
+                                string requestMessage = await GetRequestMessage(client);
+
+                                // Ensure that request message starts with HTTP GET Method/Verb
+                                if (!requestMessage.StartsWith(HttpMethod.Get.Method, StringComparison.OrdinalIgnoreCase))
                                 {
-                                    LogProbe(loggingOptions, healthCheckType);
-                                    HealthCheckOverallStatus healthCheckOverallStatus = await ProcessHealthCheck(client, healthCheckType, cancellationToken);
-                                    LogHealthCheck(loggingOptions, healthCheckOverallStatus);
+                                    var notAllowedResponse = GenerateHttpResponse(HttpStatusCode.MethodNotAllowed);
+                                    await SendResponse(client, notAllowedResponse, cancellationToken);
+                                    continue;       // Bypass all other code
                                 }
+
+                                // Parse endpoint from request message and determine if it is one of our health check endpoints
+                                string endpoint = GetRequestedEndpoint(requestMessage);                         
+                                HealthCheckType healthCheckType = GetHealthCheckType(endpoint, healthCheckEndpoints);
+
+                                // Send appropriate response based upon Health Check Type
+                                if (healthCheckType == HealthCheckType.Unknown)
+                                {
+                                    var notFoundResponse = GenerateHttpResponse(HttpStatusCode.NotFound);
+                                    await SendResponse(client, notFoundResponse, cancellationToken);
+                                    continue;       // Bypass all other code
+                                }
+
+
+                                // Process valid health check
+                                LogProbe(loggingOptions, healthCheckType);
+                                HealthCheckOverallStatus healthCheckOverallStatus = await _healthCheckService.ExecuteCheckServices(healthCheckType, cancellationToken);
+                                var okResponse = CreateResponse(healthCheckType, healthCheckOverallStatus);
+                                await SendResponse(client, okResponse, cancellationToken);
+                                LogHealthCheck(loggingOptions, healthCheckOverallStatus);
                             }
+
                             catch(Exception ex)
                             {
                                 _logger.LogError(ex, "Http Probe Service failed when processing request");
@@ -92,78 +114,66 @@ namespace HealthCheck
 
 
         #region HTTP Request Processes
-        private async Task<string> GetRequestedEndpoint(TcpClient client)
+        private async Task<string> GetRequestMessage(TcpClient client)
         {
-            const int BUFFER_SZIE = 256;
-            const string HTTP_GET = "GET";
-            const char SPACE = ' ';
-            const string DEFAULT_ENDPOINT = "/";
-
-            string endpoint = DEFAULT_ENDPOINT;
-
-            var buffer = new byte[BUFFER_SZIE];
+            var buffer = new byte[MAX_REQUEST_MESSAGE_SIZE];
             var stream = client.GetStream();
-            var length = await stream.ReadAsync(buffer, 0, BUFFER_SZIE);
-            var requestMsg = Encoding.UTF8.GetString(buffer, 0, length);
-            var requestVerb = FindRequestVerb(requestMsg, HTTP_GET);
-
-            if (!String.IsNullOrWhiteSpace(requestVerb))
-            {
-                var parsedVerb = requestVerb.Split(SPACE);
-                if (parsedVerb.Length >= 2)
-                    endpoint = parsedVerb[1];
-            }
-
-            return AppendTrailingForwardSlash(StripParameters(endpoint));
+            var length = await stream.ReadAsync(buffer, 0, MAX_REQUEST_MESSAGE_SIZE);
+            return Encoding.UTF8.GetString(buffer, 0, length).Trim();
         }
 
-        private string FindRequestVerb(string requestMsg, string verb)
+        /// <summary>
+        /// Parse the request message to get the requested endpoing
+        /// </summary>
+        /// <param name="requestMsg"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// This needs to be as fast as possible, therefore the use of Spans and Char arrays
+        /// </remarks>
+        private string GetRequestedEndpoint(ReadOnlySpan<char> requestMsg)
         {
-            const string CRLF = "\r\n";
-            string ret = null;
-            var parsedMsg = requestMsg.Split(CRLF);
-
-            foreach (string item in parsedMsg)
-            {
-                if (item.StartsWith(verb, StringComparison.OrdinalIgnoreCase))
-                {
-                    ret = item;
-                    break;
-                }
-            }
-
-            return ret;
-        }
-
-        private string StripParameters(ReadOnlySpan<char> endpoint)
-        {
+            const char CARRIAGE_RETURN = '\r';
+            const char LINE_FEED = '\n';
+            const char SPACE = ' ';
             const char PARAMETER_TOKEN = '?';
 
-            int length = endpoint.Length;
-            int foundIndex = length;
-            for (int i = 0; i < length; i++)
+            // Read Past Http Method and get endpoint
+            int methodLength = HttpMethod.Get.Method.Length;
+            int messageLength = requestMsg.Length;
+            char[] endpoint = new char[MAX_REQUEST_MESSAGE_SIZE];
+            int cnt = 0;
+
+            for(int i = methodLength; i < messageLength && cnt < MAX_REQUEST_MESSAGE_SIZE; i++)
             {
-                if (endpoint[i] == PARAMETER_TOKEN)
-                {
-                    foundIndex = i;
+                char c = requestMsg[i];
+
+                // Skip leading spaces (We know leading spaces because of the value of cnt)
+                if (c == SPACE && 
+                    cnt == 0)
+                    continue;
+
+                // Break out if we encounter any of the following
+                if (c == SPACE ||                       // Trailing space means we have reached the end of the requested endpoint
+                    c == PARAMETER_TOKEN ||             // Start of Parameters, which are not needed
+                    c == CARRIAGE_RETURN ||             // Extra precaution
+                    c == LINE_FEED)                     // Extra precaution
                     break;
-                }
+
+                // Build endpoint
+                endpoint[cnt++] = c;
             }
 
-            return new string(endpoint.Slice(0, foundIndex));
+            return AppendTrailingForwardSlash(new string(endpoint, 0, cnt));
         }
+
 
         private string AppendTrailingForwardSlash(ReadOnlySpan<char> endpoint)
         {
             const char FORWARD_SLASH = '/';
-            string ret = null;
-
-            if (endpoint[endpoint.Length - 1] == FORWARD_SLASH)
-                ret = new string(endpoint);
-            else
-                ret = String.Concat(new string(endpoint), FORWARD_SLASH);
-
-            return ret;
+            var length = endpoint.Length;
+            return (length > 0 && endpoint[length - 1] == FORWARD_SLASH)
+                        ? new string(endpoint)
+                        : String.Concat(new string(endpoint), FORWARD_SLASH);
         }
         #endregion
 
@@ -174,16 +184,16 @@ namespace HealthCheck
             IDictionary<HealthCheckType, string> ret = new Dictionary<HealthCheckType, string>();
 
             if (!String.IsNullOrWhiteSpace(endpointAssignment.Status))
-                ret.Add(HealthCheckType.Status, HttpUtility.UrlEncode(AppendTrailingForwardSlash(endpointAssignment.Status)));
+                ret.Add(HealthCheckType.Status, AppendTrailingForwardSlash(endpointAssignment.Status));
 
             if (!String.IsNullOrWhiteSpace(endpointAssignment.Startup))
-                ret.Add(HealthCheckType.Startup, HttpUtility.UrlEncode(AppendTrailingForwardSlash(endpointAssignment.Startup)));
+                ret.Add(HealthCheckType.Startup, AppendTrailingForwardSlash(endpointAssignment.Startup));
 
             if (!String.IsNullOrWhiteSpace(endpointAssignment.Readiness))
-                ret.Add(HealthCheckType.Readiness, HttpUtility.UrlEncode(AppendTrailingForwardSlash(endpointAssignment.Readiness)));
+                ret.Add(HealthCheckType.Readiness, AppendTrailingForwardSlash(endpointAssignment.Readiness));
 
             if (!String.IsNullOrWhiteSpace(endpointAssignment.Liveness))
-                ret.Add(HealthCheckType.Liveness, HttpUtility.UrlEncode(AppendTrailingForwardSlash(endpointAssignment.Liveness)));
+                ret.Add(HealthCheckType.Liveness, AppendTrailingForwardSlash(endpointAssignment.Liveness));
 
             return ret;
         }
@@ -195,36 +205,28 @@ namespace HealthCheck
                                     .FirstOrDefault();
         }
 
-        private async Task<HealthCheckOverallStatus> ProcessHealthCheck(TcpClient client, HealthCheckType healthCheckType, CancellationToken cancellationToken)
-        {
-            HealthCheckOverallStatus healthCheckOverallStatus = await _healthCheckService.ExecuteCheckServices(healthCheckType, cancellationToken);
-            await SendResponse(client, healthCheckType, healthCheckOverallStatus, cancellationToken);
-            return healthCheckOverallStatus;
-        }
 
-        private async Task SendResponse(TcpClient client, HealthCheckType healthCheckType, HealthCheckOverallStatus healthCheckOverallStatus, CancellationToken cancellationToken)
+        private string CreateResponse(HealthCheckType healthCheckType, HealthCheckOverallStatus healthCheckOverallStatus)
         {
-            byte[] httpResponse;
+            string httpResponse;
             switch (healthCheckType)
             {
                 case HealthCheckType.Status:
-                    httpResponse = GenerateHttpReponse(HttpStatusCode.OK, healthCheckOverallStatus);
+                    httpResponse = GenerateHttpResponse(HttpStatusCode.OK, healthCheckOverallStatus);
                     break;
 
                 default:
                     if (healthCheckOverallStatus.HealthStatus == HealthStatus.Healthy)
-                        httpResponse = GenerateHttpReponse(HttpStatusCode.OK, null);
+                        httpResponse = GenerateHttpResponse(HttpStatusCode.OK);
                     else
-                        httpResponse = GenerateHttpReponse(HttpStatusCode.ServiceUnavailable, null);
+                        httpResponse = GenerateHttpResponse(HttpStatusCode.ServiceUnavailable);
                     break;
             }
 
-            var stream = client.GetStream();
-            await stream.WriteAsync(httpResponse, cancellationToken);
-            await stream.FlushAsync(cancellationToken);
+            return httpResponse;
         }
 
-        private byte[] GenerateHttpReponse(HttpStatusCode httpStatusCode, HealthCheckOverallStatus? healthCheckOverallStatus)
+        private string GenerateHttpResponse(HttpStatusCode httpStatusCode, HealthCheckOverallStatus? healthCheckOverallStatus = null)
         {
             StringBuilder sb = new StringBuilder();
 
@@ -250,7 +252,16 @@ namespace HealthCheck
             }
 
 
-            return Encoding.UTF8.GetBytes(sb.ToString());
+            return sb.ToString();
+        }
+
+
+        private async Task SendResponse(TcpClient client, string httpResponse, CancellationToken cancellationToken)
+        {
+            byte[] http = Encoding.UTF8.GetBytes(httpResponse);
+            var stream = client.GetStream();
+            await stream.WriteAsync(http, cancellationToken);
+            await stream.FlushAsync(cancellationToken);
         }
         #endregion
 
