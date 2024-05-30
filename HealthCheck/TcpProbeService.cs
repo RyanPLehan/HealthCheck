@@ -8,23 +8,25 @@ using System.Text;
 using System.Text.Json.Serialization;
 using HealthCheck.Configuration;
 using HealthCheck.Formatters;
+using System.Threading;
 
 namespace HealthCheck
 {
     /// <summary>
-    /// This will respond to HTTP probes using the given port by issuing HTTP 200 or HTTP 503 status codes
+    /// This will respond to TCP probes using the given port
     /// </summary>
     /// <remarks>
-    /// This is a bare minimum HTTP Server that will specifically look for endpoints.
-    /// If a matching endpoint is found, then it will execute the Health Check services for the associated health check type
-    /// This is a typical Request/Response in that
-    /// a. A HTTP GET request is made to a specific end point
-    /// b. The endpoint is scanned to determine if it is a Health Check endpoint
-    /// c. Execution of one or more Health Checks for that endpoint is executed and compiled into a single object
-    /// d. If the endpoint is registered to Health Check Status Request, then the response will send a Json object of all Health Check Service Results
-    /// e. If the endpoint is registered to Health Check Startup, Readiness or Liveness then one of the following responses will be returned
-    ///     1.  HTTP 200 OK if ALL Health Check Services returns Healthy
-    ///     2.  HTTP 302 Service Unavailable if just ONE Health Check Service returns a Degraded or Unhealthy result
+    /// TCP Probes are just the opposite of the Request/Response model...
+    /// 1. A TCP probe is successful if a connection is made.
+    /// 2. TCP Listener must be activated AFTER the execution of the health checks AND have a healthy result
+    /// 3. Only listen once then drop the connection
+    /// 
+    /// *** PLease Read the following ***
+    /// Kuberentes has a Startup, Readiness, and Liveness Probe (in order)
+    /// Therefore, if defined, the monitoring will not progress until the Probe has occurred.
+    /// Meaning, if Startup, Readiness and Liveness is defined to be monitored.
+    /// Then the monitor will not respond to the Readiness probe until the Startup Probe has occurred.
+    /// The same applies to Liveness, in that, the monitor will not respond to the Liveness probe until the Readiness probe has occurred
     /// </remarks>
     internal class TcpProbeService : ITcpProbeService
     {
@@ -44,40 +46,64 @@ namespace HealthCheck
 
         public async Task Monitor(TcpProbeOptions probeOptions, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
         {
+            int intervalInSeconds = 3;
+
+            // Yield so that caller can continue processing
+            await Task.Yield();
+
             // Process in order of Startup, Readiness, then Liveness
             // Must wait for probe before going on to next one
             if (probeOptions.Ports.Startup != null)
+            {
+                await ExecuteIntervalCheck(intervalInSeconds, HealthCheckType.Startup, loggingOptions, cancellationToken);
                 await MonitorOnce(probeOptions.Ports.Startup.Value, HealthCheckType.Startup, loggingOptions, cancellationToken);
+            }
 
             if (probeOptions.Ports.Readiness != null)
+            {
+                await ExecuteIntervalCheck(intervalInSeconds, HealthCheckType.Readiness, loggingOptions, cancellationToken);
                 await MonitorOnce(probeOptions.Ports.Readiness.Value, HealthCheckType.Readiness, loggingOptions, cancellationToken);
+            }
 
             if (probeOptions.Ports.Liveness != null)
-                await MonitorContinuously(probeOptions.Ports.Liveness.Value, HealthCheckType.Liveness, loggingOptions, cancellationToken);
+            {
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    await ExecuteIntervalCheck(intervalInSeconds, HealthCheckType.Liveness, loggingOptions, cancellationToken);
+                    await MonitorOnce(probeOptions.Ports.Liveness.Value, HealthCheckType.Liveness, loggingOptions, cancellationToken);
+                }
+            }
 
             await Task.CompletedTask;
         }
 
 
-        private async Task MonitorOnce(int port, HealthCheckType healthCheckType, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
+        private async Task<HealthCheckOverallStatus> ExecuteIntervalCheck(int intervalInSeconds, HealthCheckType healthCheckType, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
         {
-            int intervalTimeInMS = 3000;                        // 3 Seconds
+            int intervalTimeInMS = intervalInSeconds * 1000;        // Convert from seconds to milliseconds
             HealthCheckOverallStatus healthCheckOverallStatus;
 
+            // Loop until the overall status is healthy
+            do
+            {
+                healthCheckOverallStatus = await _healthCheckService.ExecuteCheckServices(healthCheckType, cancellationToken);
+                LogHealthCheck(loggingOptions, healthCheckOverallStatus);
+
+                if (healthCheckOverallStatus.HealthStatus != HealthStatus.Healthy)
+                    await Task.Delay(intervalTimeInMS);
+
+            } while (!cancellationToken.IsCancellationRequested && healthCheckOverallStatus.HealthStatus != HealthStatus.Healthy);
+
+            return healthCheckOverallStatus;
+        }
+
+
+        private async Task MonitorOnce(int port, HealthCheckType healthCheckType, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
+        {
             try
             {
-                // Loop until the overall status is healthy
-                do
-                {
-                    healthCheckOverallStatus = await _healthCheckService.ExecuteCheckServices(healthCheckType, cancellationToken);
-                    LogHealthCheck(loggingOptions, healthCheckOverallStatus);
+                cancellationToken.ThrowIfCancellationRequested();
 
-                    if (healthCheckOverallStatus.HealthStatus != HealthStatus.Healthy)
-                        await Task.Delay(intervalTimeInMS);
-
-                } while (!cancellationToken.IsCancellationRequested && healthCheckOverallStatus.HealthStatus != HealthStatus.Healthy);
-
-    
                 // Listen for probe on specified port.
                 using (TcpListener listener = new TcpListener(IPAddress.Any, port))
                 {
@@ -94,53 +120,8 @@ namespace HealthCheck
 
             catch (Exception ex)
             {
-                _logger.LogError(ex, "TCP Probe Service encountered an error and is shutting down");
+                _logger.LogError(ex, "TCP Probe Service listener encountered an error and is shutting down");
             }
-
-            await Task.CompletedTask;
-        }
-
-
-
-
-
-        private async Task MonitorContinuously(int port, HealthCheckType healthCheckType, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
-        {
-            try
-            {
-                using (TcpListener listener = new TcpListener(IPAddress.Any, port))
-                {
-                    listener.Start();
-                    while (!cancellationToken.IsCancellationRequested)
-                    {
-                        using (TcpClient client = await listener.AcceptTcpClientAsync(cancellationToken))
-                        {
-                            try
-                            {
-                                if (healthCheckType != HealthCheckType.Unknown)
-                                {
-                                    LogProbe(loggingOptions, healthCheckType);
-                                    HealthCheckOverallStatus healthCheckOverallStatus = await ProcessHealthCheck(client, healthCheckType, cancellationToken);
-                                    LogHealthCheck(loggingOptions, healthCheckOverallStatus);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogError(ex, "Tcp Probe Service failed when processing request");
-                            }
-                        }
-                    }
-                }
-            }
-
-            catch (OperationCanceledException ex)
-            { }
-
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "TCP Probe Service encountered an error and is shutting down");
-            }
-
 
             await Task.CompletedTask;
         }

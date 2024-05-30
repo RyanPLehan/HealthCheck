@@ -99,14 +99,28 @@ namespace HealthCheck
 
         private Task StartHttpProbe(CancellationToken cancellationToken)
         {
-            IHttpProbeService service = _healthCheckService.GetProbeService<IHttpProbeService>();
-            return service.Monitor(_options.HttpProbe, _options.Logging, cancellationToken);
+            Task task = Task.CompletedTask;
+
+            if (_options.HttpProbe != null)
+            {
+                IHttpProbeService service = _healthCheckService.GetProbeService<IHttpProbeService>();
+                task = service.Monitor(_options.HttpProbe, _options.Logging, cancellationToken);
+            }
+
+            return task;
         }
 
         private Task StartTcpProbe(CancellationToken cancellationToken)
         {
-            ITcpProbeService service = _healthCheckService.GetProbeService<ITcpProbeService>();
-            return service.Monitor(_options.TcpProbe, _options.Logging, cancellationToken);
+            Task task = Task.CompletedTask;
+
+            if (_options.TcpProbe != null)
+            {
+                ITcpProbeService service = _healthCheckService.GetProbeService<ITcpProbeService>();
+                task = service.Monitor(_options.TcpProbe, _options.Logging, cancellationToken);
+            }
+
+            return task;
         }
     }
 }

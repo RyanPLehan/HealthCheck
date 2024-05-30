@@ -44,8 +44,10 @@ namespace HealthCheck
 
         public async Task Monitor(HttpProbeOptions probeOptions, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
         {
-            IDictionary<HealthCheckType, string> healthCheckEndpoints = CreateHealthCheckEndpointDictionary(probeOptions.Endpoints);
+            // Yield so that caller can continue processing
+            await Task.Yield();
 
+            IDictionary<HealthCheckType, string> healthCheckEndpoints = CreateHealthCheckEndpointDictionary(probeOptions.Endpoints);
             try
             {
                 using (TcpListener listener = new TcpListener(IPAddress.Any, probeOptions.Port))
@@ -111,7 +113,7 @@ namespace HealthCheck
                     endpoint = parsedVerb[1];
             }
 
-            return NormalizeEndPoint(StripParameters(endpoint));
+            return AppendTrailingForwardSlash(StripParameters(endpoint));
         }
 
         private string FindRequestVerb(string requestMsg, string verb)
@@ -150,7 +152,7 @@ namespace HealthCheck
             return new string(endpoint.Slice(0, foundIndex));
         }
 
-        private string NormalizeEndPoint(ReadOnlySpan<char> endpoint)
+        private string AppendTrailingForwardSlash(ReadOnlySpan<char> endpoint)
         {
             const char FORWARD_SLASH = '/';
             string ret = null;
@@ -171,23 +173,23 @@ namespace HealthCheck
             IDictionary<HealthCheckType, string> ret = new Dictionary<HealthCheckType, string>();
 
             if (!String.IsNullOrWhiteSpace(endpointAssignment.Status))
-                ret.Add(HealthCheckType.Status, endpointAssignment.Status);
+                ret.Add(HealthCheckType.Status, AppendTrailingForwardSlash(endpointAssignment.Status));
 
             if (!String.IsNullOrWhiteSpace(endpointAssignment.Startup))
-                ret.Add(HealthCheckType.Startup, endpointAssignment.Startup);
+                ret.Add(HealthCheckType.Startup, AppendTrailingForwardSlash(endpointAssignment.Startup));
 
             if (!String.IsNullOrWhiteSpace(endpointAssignment.Readiness))
-                ret.Add(HealthCheckType.Readiness, endpointAssignment.Readiness);
+                ret.Add(HealthCheckType.Readiness, AppendTrailingForwardSlash(endpointAssignment.Readiness));
 
             if (!String.IsNullOrWhiteSpace(endpointAssignment.Liveness))
-                ret.Add(HealthCheckType.Liveness, endpointAssignment.Liveness);
+                ret.Add(HealthCheckType.Liveness, AppendTrailingForwardSlash(endpointAssignment.Liveness));
 
             return ret;
         }
 
         private HealthCheckType GetHealthCheckType(string endpoint, IDictionary<HealthCheckType, string> expectedEndpoints)
         {
-            return expectedEndpoints.Where(kvp => endpoint.EndsWith(NormalizeEndPoint(kvp.Value), StringComparison.OrdinalIgnoreCase))
+            return expectedEndpoints.Where(kvp => endpoint.EndsWith(kvp.Value, StringComparison.OrdinalIgnoreCase))
                                     .Select(kvp => kvp.Key)
                                     .FirstOrDefault();
         }
