@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Threading.Tasks;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Web;
 using HealthCheck.Configuration;
 using HealthCheck.Formatters;
 
@@ -173,16 +174,16 @@ namespace HealthCheck
             IDictionary<HealthCheckType, string> ret = new Dictionary<HealthCheckType, string>();
 
             if (!String.IsNullOrWhiteSpace(endpointAssignment.Status))
-                ret.Add(HealthCheckType.Status, AppendTrailingForwardSlash(endpointAssignment.Status));
+                ret.Add(HealthCheckType.Status, HttpUtility.UrlEncode(AppendTrailingForwardSlash(endpointAssignment.Status)));
 
             if (!String.IsNullOrWhiteSpace(endpointAssignment.Startup))
-                ret.Add(HealthCheckType.Startup, AppendTrailingForwardSlash(endpointAssignment.Startup));
+                ret.Add(HealthCheckType.Startup, HttpUtility.UrlEncode(AppendTrailingForwardSlash(endpointAssignment.Startup)));
 
             if (!String.IsNullOrWhiteSpace(endpointAssignment.Readiness))
-                ret.Add(HealthCheckType.Readiness, AppendTrailingForwardSlash(endpointAssignment.Readiness));
+                ret.Add(HealthCheckType.Readiness, HttpUtility.UrlEncode(AppendTrailingForwardSlash(endpointAssignment.Readiness)));
 
             if (!String.IsNullOrWhiteSpace(endpointAssignment.Liveness))
-                ret.Add(HealthCheckType.Liveness, AppendTrailingForwardSlash(endpointAssignment.Liveness));
+                ret.Add(HealthCheckType.Liveness, HttpUtility.UrlEncode(AppendTrailingForwardSlash(endpointAssignment.Liveness)));
 
             return ret;
         }
