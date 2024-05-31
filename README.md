@@ -63,7 +63,7 @@ The same applies to Liveness, in that, the monitor will not respond to the Liven
     -  When a custom written health check is added, the default health check will automatically be removed.
 4.  Client custom written Health Checks
     -  Can have as many as needed
-    -  Must be registered via the AddHealthChecks Dependency Injection service collection Extension method
+    -  Must be registered via the AddHealthChecks Dependency Injection service collection extension method
     -  Health Checks are specifically registered to a Monitor Type (ie Status, Startup, Readiness, Liveness)
     -  The same custom written Health Check can be registered to multiple Monitor Types.
 
