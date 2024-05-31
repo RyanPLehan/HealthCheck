@@ -33,22 +33,22 @@ This library support probes HTTP and TCP Probes without the need of any hosting 
 3.  Each Health Check Monitor can be assigned an individual or shared port number.
 4.  When probed, a **Successfull** indication is when the connection is accepted and then closed.
 5.  This is **not** a Request/Response model.
-    -  This means, health checks are executed until **ALL** results are Healthy.  Then a port will be listened upon for probe.
-6.  Startup and Readiness probes are a **One Time Occurrance**.
-    -  This means once a TCP probe is successful, it will not be reactivated
-7.  Liveness probe will be active for the entire lifetime of the applicaiton.
-    -  After the initial probe, Health Checks will be re-ran after a successful probe.
+    -  This means, health checks are executed until **ALL** results are Healthy.  Then a port will be listened upon for a probe.
+6.  Startup and Readiness monitors are a **One Time Occurrance**.
+    -  This means once a TCP probe is successful, it will not be reactivated.
+7.  Liveness monitor will be active for the entire lifetime of the applicaiton.
+    -  Health Checks will be re-ran after each successful probe.
 
 ### TCP Probes **MUST READ**
 Kuberentes has a Startup, Readiness, and Liveness Probe (in order)  
-Therefore, if defined, the monitoring will not progress until the Probe has occurred.  
+Therefore, if defined, the monitoring will not progress until the probe has occurred.  
 Meaning, if Startup, Readiness and Liveness are defined to be monitored.  
-Then the monitor will not respond to the Readiness probe until the Startup Probe has occurred.  
-The same applies to Liveness, in that, the monitor will not respond to the Liveness probe until the Readiness probe has occurred  
+Then the monitor will not respond to the Readiness probe until the Startup probe has occurred.  
+The same applies to Liveness, in that, the monitor will not respond to the Liveness probe until the Readiness probe has occurred.  
 
 
 ## Health Checks
-1.  All Health Check Probes have a default Health Check routine that will return a single result status.  
+1.  All Health Check Probes have a default Health Check routine that will return a single result.  
     These defaults are in place so that a client can respond without the need of a custom written health check.
     -  Status - By default will return **UnHealthy**
         -  This works in accordance to Microsoft's Health Check
