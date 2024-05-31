@@ -48,7 +48,7 @@ The same applies to Liveness, in that, the monitor will not respond to the Liven
 
 
 ## Health Checks
-1.  All Health Check Probes have a default Health Check routine that will return a single result.  
+1.  All Health Check Monitors have a default Health Check routine that will return a single result.  
     These defaults are in place so that a client can respond without the need of a custom written health check.
     -  Status - By default will return **UnHealthy**
         -  This works in accordance to Microsoft's Health Check
