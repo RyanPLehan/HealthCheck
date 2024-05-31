@@ -24,7 +24,7 @@ namespace HealthCheck
     /// *** PLease Read the following ***
     /// Kuberentes has a Startup, Readiness, and Liveness Probe (in order)
     /// Therefore, if defined, the monitoring will not progress until the Probe has occurred.
-    /// Meaning, if Startup, Readiness and Liveness is defined to be monitored.
+    /// Meaning, if Startup, Readiness and Liveness are defined to be monitored.
     /// Then the monitor will not respond to the Readiness probe until the Startup Probe has occurred.
     /// The same applies to Liveness, in that, the monitor will not respond to the Liveness probe until the Readiness probe has occurred
     /// </remarks>
@@ -79,23 +79,23 @@ namespace HealthCheck
         }
 
 
-        private async Task<HealthCheckOverallStatus> ExecuteIntervalCheck(byte intervalInSeconds, HealthCheckType healthCheckType, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
+        private async Task<HealthCheckResults> ExecuteIntervalCheck(byte intervalInSeconds, HealthCheckType healthCheckType, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
         {
             int intervalTimeInMS = intervalInSeconds * 1000;        // Convert from seconds to milliseconds
-            HealthCheckOverallStatus healthCheckOverallStatus;
+            HealthCheckResults healthCheckResults;
 
             // Loop until the overall status is healthy
             do
             {
-                healthCheckOverallStatus = await _healthCheckService.ExecuteCheckServices(healthCheckType, cancellationToken);
-                LogHealthCheck(loggingOptions, healthCheckOverallStatus);
+                healthCheckResults = await _healthCheckService.ExecuteCheckServices(healthCheckType, cancellationToken);
+                LogHealthCheck(loggingOptions, healthCheckResults);
 
-                if (healthCheckOverallStatus.HealthStatus != HealthStatus.Healthy)
+                if (healthCheckResults.HealthStatus != HealthStatus.Healthy)
                     await Task.Delay(intervalTimeInMS);
 
-            } while (!cancellationToken.IsCancellationRequested && healthCheckOverallStatus.HealthStatus != HealthStatus.Healthy);
+            } while (!cancellationToken.IsCancellationRequested && healthCheckResults.HealthStatus != HealthStatus.Healthy);
 
-            return healthCheckOverallStatus;
+            return healthCheckResults;
         }
 
 
@@ -136,19 +136,19 @@ namespace HealthCheck
         }
 
 
-        private void LogHealthCheck(ProbeLoggingOptions loggingOptions, HealthCheckOverallStatus healthCheckOverallStatus)
+        private void LogHealthCheck(ProbeLoggingOptions loggingOptions, HealthCheckResults healthCheckResults)
         {
             if (loggingOptions.LogStatusWhenHealthy &&
-                healthCheckOverallStatus.HealthStatus == HealthStatus.Healthy)
+                healthCheckResults.HealthStatus == HealthStatus.Healthy)
             {
-                _logger.LogInformation("Health Check Result: {0}", healthCheckOverallStatus.OverallStatus);
+                _logger.LogInformation("Health Check Result: {0}", healthCheckResults.OverallStatus);
             }
 
             if (loggingOptions.LogStatusWhenNotHealthy &&
-                healthCheckOverallStatus.HealthStatus != HealthStatus.Healthy)
+                healthCheckResults.HealthStatus != HealthStatus.Healthy)
             {
-                _logger.LogWarning("Health Check Result: {0}", healthCheckOverallStatus.OverallStatus);
-                _logger.LogWarning("Health Check Detailed Results: {0}", Json.Serialize(healthCheckOverallStatus));
+                _logger.LogWarning("Health Check Result: {0}", healthCheckResults.OverallStatus);
+                _logger.LogWarning("Health Check Detailed Results: {0}", Json.Serialize(healthCheckResults));
             }
         }
         #endregion

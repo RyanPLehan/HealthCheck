@@ -28,6 +28,10 @@ namespace HealthCheck.Registration
         {
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
+            // If dev adds their own check status, remove default status check
+            RemoveService<LivenessCheck>();
+            RemoveRegistration<LivenessCheck>(HealthCheckType.Liveness);
+
             CreateRegistration(typeof(TService), HealthCheckType.Liveness, name);
             _services.TryAddKeyedSingleton<IHealthCheck, TService>(HealthCheckType.Liveness);
             return this;
@@ -44,6 +48,10 @@ namespace HealthCheck.Registration
         {
             ArgumentNullException.ThrowIfNull(instance, nameof(instance));
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+
+            // If dev adds their own check status, remove default status check
+            RemoveService<LivenessCheck>();
+            RemoveRegistration<LivenessCheck>(HealthCheckType.Liveness);
 
             CreateRegistration(instance.GetType(), HealthCheckType.Liveness, name);
             _services.TryAddKeyedSingleton<IHealthCheck>(HealthCheckType.Liveness, instance);
@@ -63,6 +71,10 @@ namespace HealthCheck.Registration
         {
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
+            // If dev adds their own check status, remove default status check
+            RemoveService<ReadinessCheck>();
+            RemoveRegistration<ReadinessCheck>(HealthCheckType.Readiness);
+
             CreateRegistration(typeof(TService), HealthCheckType.Readiness, name);
             _services.TryAddKeyedSingleton<IHealthCheck, TService>(HealthCheckType.Readiness);
             return this;
@@ -79,6 +91,10 @@ namespace HealthCheck.Registration
         {
             ArgumentNullException.ThrowIfNull(instance, nameof(instance));
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+
+            // If dev adds their own check status, remove default status check
+            RemoveService<ReadinessCheck>();
+            RemoveRegistration<ReadinessCheck>(HealthCheckType.Readiness);
 
             CreateRegistration(instance.GetType(), HealthCheckType.Readiness, name);
             _services.TryAddKeyedSingleton<IHealthCheck>(HealthCheckType.Readiness, instance);
@@ -98,6 +114,10 @@ namespace HealthCheck.Registration
         {
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
+            // If dev adds their own check status, remove default status check
+            RemoveService<StartupCheck>();
+            RemoveRegistration<StartupCheck>(HealthCheckType.Startup);
+
             CreateRegistration(typeof(TService), HealthCheckType.Startup, name);
             _services.TryAddKeyedSingleton<IHealthCheck, TService>(HealthCheckType.Startup);
             return this;
@@ -114,6 +134,10 @@ namespace HealthCheck.Registration
         {
             ArgumentNullException.ThrowIfNull(instance, nameof(instance));
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+
+            // If dev adds their own check status, remove default status check
+            RemoveService<StartupCheck>();
+            RemoveRegistration<StartupCheck>(HealthCheckType.Startup);
 
             CreateRegistration(instance.GetType(), HealthCheckType.Startup, name);
             _services.TryAddKeyedSingleton<IHealthCheck>(HealthCheckType.Startup, instance);

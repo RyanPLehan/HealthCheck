@@ -24,7 +24,10 @@ namespace HealthCheck
     /// d. If the endpoint is registered to Health Check Status Request, then the response will send a Json object of all Health Check Service Results
     /// e. If the endpoint is registered to Health Check Startup, Readiness or Liveness then one of the following responses will be returned
     ///     1.  HTTP 200 OK if ALL Health Check Services returns Healthy
-    ///     2.  HTTP 302 Service Unavailable if just ONE Health Check Service returns a Degraded or Unhealthy result
+    ///     2.  HTTP 503 Service Unavailable if just ONE Health Check Service returns a Degraded or Unhealthy result
+    /// f. Other types of responses are as follows
+    ///     1.  If the request is not a HTTP GET method, then a 405 Method Not Allowed is returned
+    ///     2.  If an endpoint is not matched, then a 404 Not Found is returned
     /// </remarks>
     internal class HttpProbeService : IHttpProbeService
     {
@@ -85,10 +88,10 @@ namespace HealthCheck
 
                                 // Process valid health check
                                 LogProbe(loggingOptions, healthCheckType);
-                                HealthCheckOverallStatus healthCheckOverallStatus = await _healthCheckService.ExecuteCheckServices(healthCheckType, cancellationToken);
-                                var okResponse = CreateResponse(healthCheckType, healthCheckOverallStatus);
+                                HealthCheckResults healthCheckResults = await _healthCheckService.ExecuteCheckServices(healthCheckType, cancellationToken);
+                                var okResponse = CreateResponse(healthCheckType, healthCheckResults);
                                 await SendResponse(client, okResponse, cancellationToken);
-                                LogHealthCheck(loggingOptions, healthCheckOverallStatus);
+                                LogHealthCheck(loggingOptions, healthCheckResults);
                             }
 
                             catch(Exception ex)
@@ -123,7 +126,7 @@ namespace HealthCheck
         }
 
         /// <summary>
-        /// Parse the request message to get the requested endpoing
+        /// Parse the request message to get the requested endpoint
         /// </summary>
         /// <param name="requestMsg"></param>
         /// <returns></returns>
@@ -148,8 +151,7 @@ namespace HealthCheck
                 char c = requestMsg[i];
 
                 // Skip leading spaces (We know leading spaces because of the value of cnt)
-                if (c == SPACE && 
-                    cnt == 0)
+                if (c == SPACE && cnt == 0)
                     continue;
 
                 // Break out if we encounter any of the following
@@ -206,17 +208,17 @@ namespace HealthCheck
         }
 
 
-        private string CreateResponse(HealthCheckType healthCheckType, HealthCheckOverallStatus healthCheckOverallStatus)
+        private string CreateResponse(HealthCheckType healthCheckType, HealthCheckResults healthCheckResults)
         {
             string httpResponse;
             switch (healthCheckType)
             {
                 case HealthCheckType.Status:
-                    httpResponse = GenerateHttpResponse(HttpStatusCode.OK, healthCheckOverallStatus);
+                    httpResponse = GenerateHttpResponse(HttpStatusCode.OK, healthCheckResults);
                     break;
 
                 default:
-                    if (healthCheckOverallStatus.HealthStatus == HealthStatus.Healthy)
+                    if (healthCheckResults.HealthStatus == HealthStatus.Healthy)
                         httpResponse = GenerateHttpResponse(HttpStatusCode.OK);
                     else
                         httpResponse = GenerateHttpResponse(HttpStatusCode.ServiceUnavailable);
@@ -226,16 +228,16 @@ namespace HealthCheck
             return httpResponse;
         }
 
-        private string GenerateHttpResponse(HttpStatusCode httpStatusCode, HealthCheckOverallStatus? healthCheckOverallStatus = null)
+        private string GenerateHttpResponse(HttpStatusCode httpStatusCode, HealthCheckResults? healthCheckResults = null)
         {
             StringBuilder sb = new StringBuilder();
 
             sb.AppendFormat("HTTP/1.1 {0} {1}", (int)httpStatusCode, httpStatusCode.ToString());
             sb.AppendLine();
             
-            if (healthCheckOverallStatus != null)
+            if (healthCheckResults != null)
             {
-                string json = Json.Serialize(healthCheckOverallStatus);
+                string json = Json.Serialize(healthCheckResults);
                 sb.AppendFormat("Content-Length: {0}", Encoding.UTF8.GetByteCount(json));
                 sb.AppendLine();
                 sb.AppendFormat("Content-Type: {0}", Json.JSON_CONTENT_TYPE);
@@ -274,19 +276,19 @@ namespace HealthCheck
         }
 
 
-        private void LogHealthCheck(ProbeLoggingOptions loggingOptions, HealthCheckOverallStatus healthCheckOverallStatus)
+        private void LogHealthCheck(ProbeLoggingOptions loggingOptions, HealthCheckResults healthCheckResults)
         {
             if (loggingOptions.LogStatusWhenHealthy &&
-                healthCheckOverallStatus.HealthStatus == HealthStatus.Healthy)
+                healthCheckResults.HealthStatus == HealthStatus.Healthy)
             {
-                _logger.LogInformation("Health Check Result: {0}", healthCheckOverallStatus.OverallStatus);
+                _logger.LogInformation("Health Check Result: {0}", healthCheckResults.OverallStatus);
             }
 
             if (loggingOptions.LogStatusWhenNotHealthy &&
-                healthCheckOverallStatus.HealthStatus != HealthStatus.Healthy)
+                healthCheckResults.HealthStatus != HealthStatus.Healthy)
             {
-                _logger.LogWarning("Health Check Result: {0}", healthCheckOverallStatus.OverallStatus);
-                _logger.LogWarning("Health Check Detailed Results: {0}", Json.Serialize(healthCheckOverallStatus));
+                _logger.LogWarning("Health Check Result: {0}", healthCheckResults.OverallStatus);
+                _logger.LogWarning("Health Check Detailed Results: {0}", Json.Serialize(healthCheckResults));
             }
         }
         #endregion

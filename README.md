@@ -1,2 +1,69 @@
-# HealthCheck
-Simple app that allows health check for Kuberentes and App Health checks without using ASP NET
+# HealthCheck 
+A .Net library that designed to monitor and respond to a Health Check probe.  
+This library support probes HTTP and TCP Probes without the need of any hosting server (ie IIS or Apache).
+
+
+## Supported Health Check Monitor Types
+1.  Status - Responds with one or more Health Check Results in JSON format.  
+    -  The output is similar to MS Health Check Results. 
+    -  This is useful for Application Monitors
+    -  Only for HTTP Probe
+2.  Startup - Response is based upon probe type
+    -  HTTP Probe - HTTP 200 OK if **ALL** health check results are Healthy, else HTTP 503 System Unavailable
+    -  TCP Probe - Will not accept connection until **ALL** health checks are Healthy.
+3.  Readiness - Response is based upon probe type
+    -  HTTP Probe - HTTP 200 OK if **ALL** health check results are Healthy, else HTTP 503 System Unavailable
+    -  TCP Probe - Will not accept connection until **ALL** health checks are Healthy.
+4.  Liveness - Response is based upon probe type
+    -  HTTP Probe - HTTP 200 OK if **ALL** health check results are Healthy, else HTTP 503 System Unavailable
+    -  TCP Probe - Will not accept connection until **ALL** health checks are Healthy.
+
+
+## HTTP Probes
+1.  To respond to a particular Health Check, an endpoint must be assigned in the configuration.
+2.  Obviously, uses a Request/Response model.  
+    -  This means, health checks are executed when a request for a specific endpoint is requested.  Then the response is returned.
+3.  Only one port number (ie 8080) will be used for one or more endpoints
+4.  Only supports HTTP GET Method
+
+
+## TCP Probes
+1.  Only Startup, Readiness and Liveness health checks are supported
+2.  A particular Health Check will respond when a Port number is assigned in the configuration.
+3.  When probed, a **Successfull** indication is when the connection is accepted and then closed.
+4.  This is **not** a Request/Response model.
+    -  This means, health checks are executed until **ALL** results are Healthy.  Then a port will be listened upon for probe.
+5.  Startup and Readiness probes are a **One Time Occurrance**.
+    -  This means once a TCP probe is successful, it will not be reactivated
+6.  Liveness probe will be active for the entire lifetime of the applicaiton.
+    -  After the initial probe, Health Checks will be re-ran after a successful probe.
+
+### TCP Probes **MUST READ**
+Kuberentes has a Startup, Readiness, and Liveness Probe (in order)  
+Therefore, if defined, the monitoring will not progress until the Probe has occurred.  
+Meaning, if Startup, Readiness and Liveness are defined to be monitored.  
+Then the monitor will not respond to the Readiness probe until the Startup Probe has occurred.  
+The same applies to Liveness, in that, the monitor will not respond to the Liveness probe until the Readiness probe has occurred  
+
+
+## Health Checks
+1.  All Health Check Probes have a default Health Check routine that will return a single result status.  
+    These defaults are in place so that a client can respond without the need of a custom written health check.
+    -  Status - By default will return **UnHealthy**
+        -  This works in accordance to Microsoft's Health Check
+    -  Startup - By default will return **Healthy**
+    -  Readiness - By default will return **Healthy**
+    -  Liveness - By default will return **Healthy**
+2.  When the Status Monitor has been defined, the following should be noted.
+    -  The client should have a custom written health check.
+    -  When a custom written health check is added, the default will automatically be removed so that the result of **UnHealthy** is not returned.
+3.  When the Startup, Readiness or Liveness Monitor have been defined, the following should be noted.
+    -  A custom written health check is optional.
+    -  When a custom written health check is added, the default health check will automatically be removed.
+4.  Client custom written Health Checks
+    -  Can have as many as needed
+    -  Must be registered via the AddHealthChecks Dependency Injection service collection Extension method
+    -  Health Checks are specifically registered to a Monitor Type (ie Status, Startup, Readiness, Liveness)
+    -  The same custom written Health Check can be registered to multiple Monitor Types.
+
+

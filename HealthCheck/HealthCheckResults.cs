@@ -6,9 +6,9 @@ using System.Text.Json.Serialization;
 
 namespace HealthCheck
 {
-    public class HealthCheckOverallStatus
+    public class HealthCheckResults
     {
-        internal HealthCheckOverallStatus(HealthStatus healthStatus, IEnumerable<KeyValuePair<string, HealthCheckResult>> results)
+        internal HealthCheckResults(HealthStatus healthStatus, IEnumerable<KeyValuePair<string, HealthCheckResult>> results)
         {
             this.HealthStatus = healthStatus;
             this.Results = results;
