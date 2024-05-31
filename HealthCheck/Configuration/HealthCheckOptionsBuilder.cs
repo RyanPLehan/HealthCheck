@@ -8,9 +8,9 @@ namespace HealthCheck.Configuration
     public class HealthCheckOptionsBuilder
     {
         public const string CONFIGURATION_SECTION = "HealthCheck";
-        private ProbeLoggingOptions _loggingOptions = null;
-        private HttpProbeOptions _httpOptions = null;
-        private TcpProbeOptions _tcpOptions = null;
+        private ProbeLoggingOptions? _loggingOptions = null;
+        private HttpProbeOptions? _httpOptions = null;
+        private TcpProbeOptions? _tcpOptions = null;
 
 
         /// <summary>

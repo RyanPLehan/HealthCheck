@@ -116,7 +116,7 @@ namespace HealthCheck
                 }
             }
 
-            catch (OperationCanceledException ex)
+            catch (OperationCanceledException)
             { }
 
             catch (Exception ex)

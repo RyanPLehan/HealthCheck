@@ -42,17 +42,17 @@ namespace HealthCheck
         /// <summary>
         /// Gets a human-readable description of the status of the component that was checked.
         /// </summary>
-        public string Description { get; private init; }
+        public string? Description { get; private init; }
 
         /// <summary>
         /// Gets an Exception representing the exception that was thrown when checking for status (if any).
         /// </summary>
-        public Exception Exception { get; private init; }
+        public Exception? Exception { get; private init; }
 
         /// <summary>
         /// Gets additional key-value pairs describing the health of the component
         /// </summary>
-        public IReadOnlyDictionary<string, object> Data { get; private init; }
+        public IReadOnlyDictionary<string, object>? Data { get; private init; }
 
 
 

@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using System.Text;
 using HealthCheck.Configuration;
 using HealthCheck.Formatters;
-using System.Diagnostics.Eventing.Reader;
 
 namespace HealthCheck
 {
@@ -103,7 +102,7 @@ namespace HealthCheck
                 }
             }
 
-            catch (OperationCanceledException ex)
+            catch (OperationCanceledException)
             { }
             
             catch (Exception ex)

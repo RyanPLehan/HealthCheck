@@ -8,7 +8,7 @@ namespace HealthCheck.Formatters
 {
     public static class Json
     {
-        private static JsonSerializerOptions JsonSerializerObjectConverterOptions = null;
+        private static JsonSerializerOptions? JsonSerializerObjectConverterOptions = null;
 
 
         public const string JSON_CONTENT_TYPE = @"application/json";
@@ -45,7 +45,7 @@ namespace HealthCheck.Formatters
             return Deserialize<T>(json, null);
         }
 
-        public static T Deserialize<T>(string json, JsonSerializerOptions jsonSerializerOptions)
+        public static T Deserialize<T>(string json, JsonSerializerOptions? jsonSerializerOptions)
         {
             var jsonOptions = jsonSerializerOptions ?? DefaultJsonSerializerOptions;
             return String.IsNullOrWhiteSpace(json) ? default(T) : JsonSerializer.Deserialize<T>(json, jsonOptions);
@@ -56,7 +56,7 @@ namespace HealthCheck.Formatters
             return Deserialize<T>(json, null);
         }
 
-        public static IEnumerable<T> Deserialize<T>(IEnumerable<string> json, JsonSerializerOptions jsonSerializerOptions)
+        public static IEnumerable<T> Deserialize<T>(IEnumerable<string> json, JsonSerializerOptions? jsonSerializerOptions)
         {
             var jsonOptions = jsonSerializerOptions ?? DefaultJsonSerializerOptions;
             return json == null ? Enumerable.Empty<T>() : json.Where(x => !String.IsNullOrWhiteSpace(x))
@@ -69,7 +69,7 @@ namespace HealthCheck.Formatters
             return Serialize(value, null);
         }
 
-        public static string Serialize(object value, JsonSerializerOptions jsonSerializerOptions)
+        public static string Serialize(object value, JsonSerializerOptions? jsonSerializerOptions)
         {
             var jsonOptions = jsonSerializerOptions ?? DefaultJsonSerializerOptions;
             return value == null ? null : JsonSerializer.Serialize(value, jsonOptions);
