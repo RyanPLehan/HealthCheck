@@ -20,7 +20,7 @@ This library support probes HTTP and TCP Probes without the need of any hosting 
 
 
 ## HTTP Probes
-1.  To respond to a particular Health Check, an endpoint must be assigned in the configuration.
+1.  To respond to a particular Health Check monitor, an endpoint must be assigned in the configuration.
 2.  Obviously, uses a Request/Response model.  
     -  This means, health checks are executed when a request for a specific endpoint is requested.  Then the response is returned.
 3.  Only one port number (ie 8080) is supported and will be used for one or more endpoints
@@ -29,7 +29,7 @@ This library support probes HTTP and TCP Probes without the need of any hosting 
 
 ## TCP Probes
 1.  Only Startup, Readiness and Liveness health checks are supported
-2.  A particular Health Check will respond when a Port number is assigned in the configuration.
+2.  A particular Health Check monitor will respond when a Port number is assigned in the configuration.
 3.  Each Health Check Monitor can be assigned an individual or shared port number.
 4.  When probed, a **Successfull** indication is when the connection is accepted and then closed.
 5.  This is **not** a Request/Response model.
