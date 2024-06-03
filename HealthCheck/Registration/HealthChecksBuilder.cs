@@ -29,7 +29,7 @@ namespace HealthCheck.Registration
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
             // If dev adds their own check status, remove default status check
-            RemoveService<LivenessCheck>();
+            RemoveService<LivenessCheck>(HealthCheckType.Liveness);
             RemoveRegistration<LivenessCheck>(HealthCheckType.Liveness);
 
             CreateRegistration(typeof(TService), HealthCheckType.Liveness, name);
@@ -50,7 +50,7 @@ namespace HealthCheck.Registration
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
             // If dev adds their own check status, remove default status check
-            RemoveService<LivenessCheck>();
+            RemoveService<LivenessCheck>(HealthCheckType.Liveness);
             RemoveRegistration<LivenessCheck>(HealthCheckType.Liveness);
 
             CreateRegistration(instance.GetType(), HealthCheckType.Liveness, name);
@@ -72,7 +72,7 @@ namespace HealthCheck.Registration
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
             // If dev adds their own check status, remove default status check
-            RemoveService<ReadinessCheck>();
+            RemoveService<ReadinessCheck>(HealthCheckType.Readiness);
             RemoveRegistration<ReadinessCheck>(HealthCheckType.Readiness);
 
             CreateRegistration(typeof(TService), HealthCheckType.Readiness, name);
@@ -93,7 +93,7 @@ namespace HealthCheck.Registration
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
             // If dev adds their own check status, remove default status check
-            RemoveService<ReadinessCheck>();
+            RemoveService<ReadinessCheck>(HealthCheckType.Readiness);
             RemoveRegistration<ReadinessCheck>(HealthCheckType.Readiness);
 
             CreateRegistration(instance.GetType(), HealthCheckType.Readiness, name);
@@ -115,7 +115,7 @@ namespace HealthCheck.Registration
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
             // If dev adds their own check status, remove default status check
-            RemoveService<StartupCheck>();
+            RemoveService<StartupCheck>(HealthCheckType.Startup);
             RemoveRegistration<StartupCheck>(HealthCheckType.Startup);
 
             CreateRegistration(typeof(TService), HealthCheckType.Startup, name);
@@ -136,7 +136,7 @@ namespace HealthCheck.Registration
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
             // If dev adds their own check status, remove default status check
-            RemoveService<StartupCheck>();
+            RemoveService<StartupCheck>(HealthCheckType.Startup);
             RemoveRegistration<StartupCheck>(HealthCheckType.Startup);
 
             CreateRegistration(instance.GetType(), HealthCheckType.Startup, name);
@@ -159,7 +159,7 @@ namespace HealthCheck.Registration
 
             // If dev adds their own check status, remove default status check
             // Only because the default status check returns Unhealthy
-            RemoveService<StatusCheck>();
+            RemoveService<StatusCheck>(HealthCheckType.Status);
             RemoveRegistration<StatusCheck>(HealthCheckType.Status);
 
             CreateRegistration(typeof(TService), HealthCheckType.Status, name);
@@ -181,7 +181,7 @@ namespace HealthCheck.Registration
 
             // If dev adds their own check status, remove default status check
             // Only because the default status check returns Unhealthy
-            RemoveService<StatusCheck>();
+            RemoveService<StatusCheck>(HealthCheckType.Status);
             RemoveRegistration<StatusCheck>(HealthCheckType.Status);
 
             CreateRegistration(instance.GetType(), HealthCheckType.Status, name);
@@ -216,15 +216,24 @@ namespace HealthCheck.Registration
             RegistrationRepository.Remove(type, healthCheckType);
         }
 
-        private void RemoveService<T>()
-            => RemoveService(typeof(T));
+        private void RemoveService<T>(HealthCheckType healthCheckType)
+            => RemoveService(typeof(T), healthCheckType);
 
-        private void RemoveService(Type type)
+        private void RemoveService(Type type, HealthCheckType healthCheckType)
         {
             if (_services.IsReadOnly)
                 throw new ReadOnlyException("ServiceCollection is read only");
 
-            var serviceDescriptor = _services.FirstOrDefault(descriptor => descriptor.ServiceType == type);
+            // This works for non-keyed services
+            //var serviceDescriptor = _services.Where(x => x.ServiceType == type)
+            //                                 .FirstOrDefault();
+
+            // This is for keyed services
+            var serviceDescriptor = _services.Where(x => x.ServiceType == typeof(IHealthCheck) &&
+                                                         (HealthCheckType)x.ServiceKey == healthCheckType &&
+                                                         x.KeyedImplementationType == type) 
+
+                                             .FirstOrDefault();
             if (serviceDescriptor != null) 
                 _services.Remove(serviceDescriptor);
         }

@@ -61,7 +61,7 @@ namespace HealthCheck
             IList<KeyValuePair<string, HealthCheckResult>> results = new List<KeyValuePair<string, HealthCheckResult>>();
 
             // Get registered services by key
-            var services = _serviceProvider.GetKeyedServices<IHealthCheck>(healthCheckType);
+            IEnumerable<IHealthCheck> services = _serviceProvider.GetKeyedServices<IHealthCheck>(healthCheckType);
 
             // Make it simple and iterate one at a time
             foreach (IHealthCheck service in services)
