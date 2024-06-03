@@ -67,15 +67,19 @@ namespace HealthCheck
         }
 
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Health Check Worker running at: {time}", DateTimeOffset.Now);
 
             IList<Task> tasks = new List<Task>();
-            tasks.Add(StartHttpProbe(stoppingToken));
-            tasks.Add(StartTcpProbe(stoppingToken));
+            tasks.Add(StartHttpProbe(cancellationToken));
+            tasks.Add(StartTcpProbe(cancellationToken));
 
+            // Wait for all tasks to complete
             await Task.WhenAll(tasks);
+
+            // Stop background service when all tasks are complete
+            await this.StopAsync(cancellationToken);
         }
 
         private void ValidateOptions()
