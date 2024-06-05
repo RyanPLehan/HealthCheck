@@ -4,31 +4,37 @@ This library support both HTTP and TCP Probes without the need of any hosting se
 
 
 ## Supported Health Check Monitor Types
-1.  Status - Responds with one or more Health Check Results in JSON format.  
+1.  *Status* - Responds with one or more Health Check Results in JSON format.  
     -  The output is similar to MS Health Check Results. 
     -  This is useful for Application Monitors
     -  Only for HTTP Probe
-2.  Startup - Response is based upon probe type
+2.  *Startup* - Response is based upon probe type
     -  HTTP Probe - HTTP 200 OK if **ALL** health check results are Healthy, else HTTP 503 System Unavailable
     -  TCP Probe - Will not accept connection until **ALL** health checks are Healthy.
-3.  Readiness - Response is based upon probe type
+        -  This will not be monitored after a one-time successfull connection.
+3.  *Readiness* - Response is based upon probe type
     -  HTTP Probe - HTTP 200 OK if **ALL** health check results are Healthy, else HTTP 503 System Unavailable
     -  TCP Probe - Will not accept connection until **ALL** health checks are Healthy.
-4.  Liveness - Response is based upon probe type
+        -  This will not be monitored after a one-time successfull connection.
+4.  *Liveness* - Response is based upon probe type
     -  HTTP Probe - HTTP 200 OK if **ALL** health check results are Healthy, else HTTP 503 System Unavailable
     -  TCP Probe - Will not accept connection until **ALL** health checks are Healthy.
+        -  This will continuously be monitored.
 
 
 ## HTTP Probes
 1.  A particular Health Check monitor will respond to a HTTP probe if the endpoint is assigned (ie not null) in the configuration.
+    -  One or more **Endpoints** must be defined for the HTTP/HTTPS Probe to be supported as a whole
 2.  Obviously, uses a Request/Response model.  
     -  This means, health checks are executed when a request for a specific endpoint is requested.  Then the response is returned.
-3.  Only one port number (ie 8080) is supported and will be used for one or more endpoints
-4.  Only supports HTTP GET Method
+3.  Supports both HTTP and/or HTTPS, but the following must be observed:
+    -  HTTP will be supported when the **Port** has been assigned a valid port number.
+    -  HTTPS will be support when the **SslPort** has been assigned a valid port number
+4.  Only supports HTTP **GET** Method
 
 
 ## TCP Probes
-1.  Only Startup, Readiness and Liveness health checks are supported
+1.  Only *Startup*, *Readiness* and *Liveness* health checks are supported
 2.  A particular Health Check monitor will respond to a TCP probe if a port number is assigned (ie not null) in the configuration.
 3.  Each Health Check Monitor can be assigned an individual or shared port number.
 4.  When probed, a **Successfull** indication is when the connection is accepted and then closed.
@@ -40,11 +46,11 @@ This library support both HTTP and TCP Probes without the need of any hosting se
     -  Health Checks will be re-ran after each successful probe.
 
 ### TCP Probes **MUST READ**
-Kuberentes has a Startup, Readiness, and Liveness Probe (in order)  
+Kuberentes has a *Startup*, *Readiness*, and *Liveness* Probe (in order)  
 Therefore, if defined, the monitoring will not progress until the probe has occurred.  
-Meaning, if Startup, Readiness and Liveness are defined to be monitored.  
-Then the monitor will not respond to the Readiness probe until the Startup probe has occurred.  
-The same applies to Liveness, in that, the monitor will not respond to the Liveness probe until the Readiness probe has occurred.  
+Meaning, if *Startup*, *Readiness* and *Liveness* are defined to be monitored.  
+Then the monitor will not respond to the *Readiness* probe until the *Startup* probe has occurred.  
+The same applies to Liveness, in that, the monitor will not respond to the *Liveness* probe until the *Readiness* probe has occurred.  
 
 
 ## Health Checks
