@@ -96,7 +96,7 @@ namespace HealthCheck.Services
         /// </remarks>
         protected override async Task<Stream> GetClientStream(TcpClient client)
         {
-            var stream = new SslStream(client.GetStream(), true);
+            var stream = new SslStream(client.GetStream(), false);
             await stream.AuthenticateAsServerAsync(_serverCertificate, false, true);
             return stream;
         }
@@ -115,12 +115,13 @@ namespace HealthCheck.Services
                 try
                 {
                     store.Open(OpenFlags.OpenExistingOnly);
-                    var certsByIssuer = store.Certificates.Find(X509FindType.FindByIssuerName, issuer, true);
+                    var certsByIssuer = store.Certificates
+                                             .Find(X509FindType.FindByIssuerName, issuer, true);
 
                     // Get cert where the expiration date is at least 1 day from current date
                     x509Certificate = store.Certificates
-                                            .Find(X509FindType.FindByTimeValid, DateTime.Now.AddDays(1), true)
-                                            .First();
+                                           .Find(X509FindType.FindByTimeValid, DateTime.Now.AddDays(1), true)
+                                           .First();
                     break;
                 }
 
@@ -142,7 +143,7 @@ namespace HealthCheck.Services
         /// Get first valid certificate from this server from any cert store or location
         /// </summary>
         /// <returns></returns>
-        private X509Certificate2? GetFirstValidServerCertificate()
+        private X509Certificate2? GetServerCertificate()
         {
             X509Certificate2? x509Certificate = null;
             StoreLocation[] storeLocations = (StoreLocation[])Enum.GetValues(typeof(StoreLocation));
@@ -161,12 +162,12 @@ namespace HealthCheck.Services
                     try
                     {
                         store.Open(OpenFlags.OpenExistingOnly);
-                        if (store.Certificates.Find(X509FindType.FindByTimeValid, DateTime.Now, true).Any())
+                        var certificates = store.Certificates
+                                                .Find(X509FindType.FindByTimeValid, DateTime.Now.AddDays(1), true);
+                        if (certificates.Any())
                         {
                             // Get any valid x509 Certificate that can be used.
-                            x509Certificate = store.Certificates
-                                                   .Find(X509FindType.FindByTimeValid, DateTime.Now, true)
-                                                   .First();
+                            x509Certificate = certificates.First();
                             break;
                         }
                     }
@@ -186,28 +187,5 @@ namespace HealthCheck.Services
 
             return x509Certificate;
         }
-
     }
 }
-
-/*
- *
- *            // This is would occur during SSL Server side authentication
-            catch (AuthenticationException)
-            { }
-
-            // This would occur by cancellationToken if sub methods would use the ThrowIfCancelled
-            catch (OperationCanceledException)
-            { }
-
-            // Any other exception
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Http Probe Service encountered an error and is shutting down");
-            }
-
-
-            await Task.CompletedTask;
-        }
-
-*/
