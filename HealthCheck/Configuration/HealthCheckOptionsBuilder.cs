@@ -80,7 +80,8 @@ namespace HealthCheck.Configuration
         /// If there is a specific probe that is not warranted, just set to null
         /// A blank endpoint or "/" will be the root
         /// </remarks>
-        public void AddHttpProbe(int port = 8080,
+        public void AddHttpProbe(int? port = 80,
+                                 int? sslPort = 443,
                                  string statusEndpoint = "health/status",
                                  string startupEndpoint = "health/startup",
                                  string readinessEndpoint = "health/readiness",
@@ -89,6 +90,7 @@ namespace HealthCheck.Configuration
             _httpOptions = new HttpProbeOptions()
             {
                 Port = port,
+                SslPort = sslPort,
                 Endpoints = new EndpointAssignment()
                 {
                     Status = statusEndpoint,
