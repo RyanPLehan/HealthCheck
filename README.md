@@ -1,6 +1,7 @@
 # HealthCheck 
 A .Net library that designed to monitor and respond to a Health Check probe.  
 This library support both HTTP and TCP Probes without the need of any hosting server (ie IIS or Apache).
+The ideal application is a Windows Service or Kuberentes/Docker container that runs as a background service.
 
 
 ## Supported Health Check Monitor Types
