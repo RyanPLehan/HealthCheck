@@ -2,13 +2,18 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security;
+using System.Security.Authentication;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using System.Text;
 using HealthCheck.Configuration;
 using HealthCheck.Formatters;
 
-namespace HealthCheck
+namespace HealthCheck.Services
 {
     /// <summary>
     /// This will respond to HTTP probes using the given port by issuing HTTP 200 or HTTP 503 status codes
@@ -28,15 +33,15 @@ namespace HealthCheck
     ///     1.  If the request is not a HTTP GET method, then a 405 Method Not Allowed is returned
     ///     2.  If an endpoint is not matched, then a 404 Not Found is returned
     /// </remarks>
-    internal class HttpProbeService : IHttpProbeService
+    internal abstract class HttpService
     {
-        private const int MAX_REQUEST_MESSAGE_SIZE = 1024;
-        private readonly ILogger<HttpProbeService> _logger;
+        protected const int MAX_REQUEST_MESSAGE_SIZE = 1024;
+        private readonly ILogger _logger;
         private readonly IHealthCheckService _healthCheckService;
 
 
-        public HttpProbeService(ILogger<HttpProbeService> logger,
-                                IHealthCheckService healthCheckService)
+        protected HttpService(ILogger logger,
+                              IHealthCheckService healthCheckService)
         {
             ArgumentNullException.ThrowIfNull(logger, nameof(logger));
             ArgumentNullException.ThrowIfNull(healthCheckService, nameof(healthCheckService));
@@ -45,84 +50,90 @@ namespace HealthCheck
             _healthCheckService = healthCheckService;
         }
 
-        public async Task Monitor(HttpProbeOptions probeOptions, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
+        protected ILogger Logger { get => _logger; }
+
+        protected async Task Execute(EndpointAssignment endpoints, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
         {
-            // Yield so that caller can continue processing
-            await Task.Yield();
+            IDictionary<HealthCheckType, string> healthCheckEndpoints = CreateHealthCheckEndpointDictionary(endpoints);
 
-            IDictionary<HealthCheckType, string> healthCheckEndpoints = CreateHealthCheckEndpointDictionary(probeOptions.Endpoints);
-            try
+            using (TcpListener listener = CreateTcpListener())
             {
-                using (TcpListener listener = new TcpListener(IPAddress.Any, probeOptions.Port))
+                listener.Start();
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    listener.Start();
-                    while (!cancellationToken.IsCancellationRequested)
+                    using (TcpClient client = await listener.AcceptTcpClientAsync(cancellationToken))
                     {
-                        using (TcpClient client = await listener.AcceptTcpClientAsync(cancellationToken))
+                        try
                         {
-                            try
+                            Stream clientStream = await GetClientStream(client);
+                            string requestMessage = await GetRequestMessage(clientStream);
+
+                            // Ensure that request message starts with HTTP GET Method/Verb
+                            if (!requestMessage.StartsWith(HttpMethod.Get.Method, StringComparison.OrdinalIgnoreCase))
                             {
-                                string requestMessage = await GetRequestMessage(client);
-
-                                // Ensure that request message starts with HTTP GET Method/Verb
-                                if (!requestMessage.StartsWith(HttpMethod.Get.Method, StringComparison.OrdinalIgnoreCase))
-                                {
-                                    var notAllowedResponse = GenerateHttpResponse(HttpStatusCode.MethodNotAllowed);
-                                    await SendResponse(client, notAllowedResponse, cancellationToken);
-                                    continue;       // Bypass all other code
-                                }
-
-                                // Parse endpoint from request message and determine if it is one of our health check endpoints
-                                string endpoint = GetRequestedEndpoint(requestMessage);                         
-                                HealthCheckType healthCheckType = GetHealthCheckType(endpoint, healthCheckEndpoints);
-
-                                // Send appropriate response based upon Health Check Type
-                                if (healthCheckType == HealthCheckType.Unknown)
-                                {
-                                    var notFoundResponse = GenerateHttpResponse(HttpStatusCode.NotFound);
-                                    await SendResponse(client, notFoundResponse, cancellationToken);
-                                    continue;       // Bypass all other code
-                                }
-
-
-                                // Process valid health check
-                                LogProbe(loggingOptions, healthCheckType);
-                                HealthCheckResults healthCheckResults = await _healthCheckService.ExecuteCheckServices(healthCheckType, cancellationToken);
-                                var okResponse = CreateResponse(healthCheckType, healthCheckResults);
-                                await SendResponse(client, okResponse, cancellationToken);
-                                LogHealthCheck(loggingOptions, healthCheckResults);
+                                var notAllowedResponse = GenerateHttpResponse(HttpStatusCode.MethodNotAllowed);
+                                await SendResponseMessage(clientStream, notAllowedResponse, cancellationToken);
+                                continue;       // Bypass all other code
                             }
 
-                            catch(Exception ex)
+                            // Parse endpoint from request message and determine if it is one of our health check endpoints
+                            string endpoint = GetRequestedEndpoint(requestMessage);
+                            HealthCheckType healthCheckType = GetHealthCheckType(endpoint, healthCheckEndpoints);
+
+                            // Send appropriate response based upon Health Check Type
+                            if (healthCheckType == HealthCheckType.Unknown)
                             {
-                                _logger.LogError(ex, "Http Probe Service failed when processing request");
+                                var notFoundResponse = GenerateHttpResponse(HttpStatusCode.NotFound);
+                                await SendResponseMessage(clientStream, notFoundResponse, cancellationToken);
+                                continue;       // Bypass all other code
                             }
+
+
+                            // Process valid health check
+                            LoggingService.LogProbe(_logger, loggingOptions, healthCheckType);
+                            HealthCheckResults healthCheckResults = await _healthCheckService.ExecuteCheckServices(healthCheckType, cancellationToken);
+                            var okResponse = CreateResponse(healthCheckType, healthCheckResults);
+                            await SendResponseMessage(clientStream, okResponse, cancellationToken);
+                            LoggingService.LogHealthCheck(_logger, loggingOptions, healthCheckResults);
+                        }
+
+                        catch (AuthenticationException ex)
+                        {
+                            _logger.LogError(ex, "Authentication failed - closing connection");
+                        }
+
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Http Service failed when processing request");
                         }
                     }
                 }
             }
 
-            catch (OperationCanceledException)
-            { }
-            
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Http Probe Service encountered an error and is shutting down");
-            }
-
-
             await Task.CompletedTask;
         }
 
 
+        #region Abstract and default protected methods
+        protected abstract TcpListener CreateTcpListener();
+
+        protected virtual Task<Stream> GetClientStream(TcpClient client) => Task.FromResult<Stream>(client.GetStream());
+        #endregion
+
+
         #region HTTP Request Processes
-        private async Task<string> GetRequestMessage(TcpClient client)
+        /// <summary>
+        /// Get HTTP Request Message
+        /// </summary>
+        /// <param name="clientStream"></param>
+        /// <returns></returns>
+        private async Task<string> GetRequestMessage(Stream clientStream)
         {
             var buffer = new byte[MAX_REQUEST_MESSAGE_SIZE];
-            var stream = client.GetStream();
-            var length = await stream.ReadAsync(buffer, 0, MAX_REQUEST_MESSAGE_SIZE);
+            var length = await clientStream.ReadAsync(buffer, 0, MAX_REQUEST_MESSAGE_SIZE);
             return Encoding.UTF8.GetString(buffer, 0, length).Trim();
         }
+
 
         /// <summary>
         /// Parse the request message to get the requested endpoint
@@ -145,7 +156,7 @@ namespace HealthCheck
             char[] endpoint = new char[MAX_REQUEST_MESSAGE_SIZE];
             int cnt = 0;
 
-            for(int i = methodLength; i < messageLength && cnt < MAX_REQUEST_MESSAGE_SIZE; i++)
+            for (int i = methodLength; i < messageLength && cnt < MAX_REQUEST_MESSAGE_SIZE; i++)
             {
                 char c = requestMsg[i];
 
@@ -172,28 +183,42 @@ namespace HealthCheck
         {
             const char FORWARD_SLASH = '/';
             var length = endpoint.Length;
-            return (length > 0 && endpoint[length - 1] == FORWARD_SLASH)
+            return length > 0 && endpoint[length - 1] == FORWARD_SLASH
                         ? new string(endpoint)
-                        : String.Concat(new string(endpoint), FORWARD_SLASH);
+                        : string.Concat(new string(endpoint), FORWARD_SLASH);
         }
         #endregion
 
 
         #region HTTP Response Processes
+        /// <summary>
+        /// Send HTTP Response Message back to client
+        /// </summary>
+        /// <param name="clientStream"></param>
+        /// <param name="httpResponse"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        private async Task SendResponseMessage(Stream clientStream, string httpResponse, CancellationToken cancellationToken)
+        {
+            byte[] http = Encoding.UTF8.GetBytes(httpResponse);
+            await clientStream.WriteAsync(http, cancellationToken);
+            await clientStream.FlushAsync(cancellationToken);
+        }
+
         private IDictionary<HealthCheckType, string> CreateHealthCheckEndpointDictionary(EndpointAssignment endpointAssignment)
         {
             IDictionary<HealthCheckType, string> ret = new Dictionary<HealthCheckType, string>();
 
-            if (!String.IsNullOrWhiteSpace(endpointAssignment.Status))
+            if (!string.IsNullOrWhiteSpace(endpointAssignment.Status))
                 ret.Add(HealthCheckType.Status, AppendTrailingForwardSlash(endpointAssignment.Status));
 
-            if (!String.IsNullOrWhiteSpace(endpointAssignment.Startup))
+            if (!string.IsNullOrWhiteSpace(endpointAssignment.Startup))
                 ret.Add(HealthCheckType.Startup, AppendTrailingForwardSlash(endpointAssignment.Startup));
 
-            if (!String.IsNullOrWhiteSpace(endpointAssignment.Readiness))
+            if (!string.IsNullOrWhiteSpace(endpointAssignment.Readiness))
                 ret.Add(HealthCheckType.Readiness, AppendTrailingForwardSlash(endpointAssignment.Readiness));
 
-            if (!String.IsNullOrWhiteSpace(endpointAssignment.Liveness))
+            if (!string.IsNullOrWhiteSpace(endpointAssignment.Liveness))
                 ret.Add(HealthCheckType.Liveness, AppendTrailingForwardSlash(endpointAssignment.Liveness));
 
             return ret;
@@ -233,7 +258,7 @@ namespace HealthCheck
 
             sb.AppendFormat("HTTP/1.1 {0} {1}", (int)httpStatusCode, httpStatusCode.ToString());
             sb.AppendLine();
-            
+
             if (healthCheckResults != null)
             {
                 string json = Json.Serialize(healthCheckResults);
@@ -254,41 +279,6 @@ namespace HealthCheck
 
 
             return sb.ToString();
-        }
-
-
-        private async Task SendResponse(TcpClient client, string httpResponse, CancellationToken cancellationToken)
-        {
-            byte[] http = Encoding.UTF8.GetBytes(httpResponse);
-            var stream = client.GetStream();
-            await stream.WriteAsync(http, cancellationToken);
-            await stream.FlushAsync(cancellationToken);
-        }
-        #endregion
-
-
-        #region Logging
-        private void LogProbe(ProbeLoggingOptions loggingOptions, HealthCheckType healthCheckType)
-        {
-            if (loggingOptions.LogProbe)
-                _logger.LogInformation("Health Check Probe: {0}", healthCheckType.ToString());
-        }
-
-
-        private void LogHealthCheck(ProbeLoggingOptions loggingOptions, HealthCheckResults healthCheckResults)
-        {
-            if (loggingOptions.LogStatusWhenHealthy &&
-                healthCheckResults.HealthStatus == HealthStatus.Healthy)
-            {
-                _logger.LogInformation("Health Check Result: {0}", healthCheckResults.OverallStatus);
-            }
-
-            if (loggingOptions.LogStatusWhenNotHealthy &&
-                healthCheckResults.HealthStatus != HealthStatus.Healthy)
-            {
-                _logger.LogWarning("Health Check Result: {0}", healthCheckResults.OverallStatus);
-                _logger.LogWarning("Health Check Detailed Results: {0}", Json.Serialize(healthCheckResults));
-            }
         }
         #endregion
     }

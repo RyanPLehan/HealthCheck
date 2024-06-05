@@ -73,6 +73,7 @@ namespace HealthCheck
 
             IList<Task> tasks = new List<Task>();
             tasks.Add(StartHttpProbe(cancellationToken));
+            tasks.Add(StartHttpsProbe(cancellationToken));
             tasks.Add(StartTcpProbe(cancellationToken));
 
             // Wait for all tasks to complete
@@ -87,8 +88,11 @@ namespace HealthCheck
             Asserts.HealthCheckOptionsAssert.AssertNoProbesConfigured(this._options);
             Asserts.HealthCheckOptionsAssert.AssertNotSamePort(_options.HttpProbe, _options.TcpProbe);
 
-            if (_options.HttpProbe != null)
-                Asserts.HealthCheckOptionsAssert.AssertNotValidPort(_options.HttpProbe.Port);
+            if (_options.HttpProbe?.Port != null)
+                Asserts.HealthCheckOptionsAssert.AssertNotValidPort(_options.HttpProbe.Port.Value);
+
+            if (_options.HttpProbe?.SslPort != null)
+                Asserts.HealthCheckOptionsAssert.AssertNotValidPort(_options.HttpProbe.SslPort.Value);
 
             if (_options.TcpProbe != null)
                 Asserts.HealthCheckOptionsAssert.AssertNotValidInterval(_options.TcpProbe.CheckRetryIntervalInSeconds);
@@ -108,9 +112,22 @@ namespace HealthCheck
         {
             Task task = Task.CompletedTask;
 
-            if (_options.HttpProbe != null)
+            if (_options.HttpProbe?.Port != null)
             {
                 IHttpProbeService service = _healthCheckService.GetProbeService<IHttpProbeService>();
+                task = service.Monitor(_options.HttpProbe, _options.Logging, cancellationToken);
+            }
+
+            return task;
+        }
+
+        private Task StartHttpsProbe(CancellationToken cancellationToken)
+        {
+            Task task = Task.CompletedTask;
+
+            if (_options.HttpProbe?.SslPort != null)
+            {
+                IHttpsProbeService service = _healthCheckService.GetProbeService<IHttpsProbeService>();
                 task = service.Monitor(_options.HttpProbe, _options.Logging, cancellationToken);
             }
 

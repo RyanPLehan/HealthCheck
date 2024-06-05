@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using HealthCheck.Configuration;
 using HealthCheck.DefaultChecks;
+using HealthCheck.Services;
 
 namespace HealthCheck.Registration
 {
@@ -22,6 +23,7 @@ namespace HealthCheck.Registration
             services.AddMemoryCache();
             services.TryAddSingleton<IHealthCheckService, HealthCheckService>();
             services.TryAddSingleton<IHttpProbeService, HttpProbeService>();
+            services.TryAddSingleton<IHttpsProbeService, HttpsProbeService>();
             services.TryAddSingleton<ITcpProbeService, TcpProbeService>();
             services.AddHostedService<HealthCheckWorker>();
 

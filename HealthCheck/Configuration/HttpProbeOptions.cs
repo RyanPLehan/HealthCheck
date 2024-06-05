@@ -5,7 +5,8 @@ namespace HealthCheck.Configuration
 {
     public class HttpProbeOptions
     {
-        public int Port { get; set; } = 8080;
+        public int? Port { get; set; } = null;
+        public int? SslPort { get; set; } = null;
         public EndpointAssignment Endpoints { get; set; } = new EndpointAssignment();
     }
 

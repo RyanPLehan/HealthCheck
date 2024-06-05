@@ -10,7 +10,7 @@ using HealthCheck.Configuration;
 using HealthCheck.Formatters;
 using System.Threading;
 
-namespace HealthCheck
+namespace HealthCheck.Services
 {
     /// <summary>
     /// This will respond to TCP probes using the given port
@@ -88,7 +88,7 @@ namespace HealthCheck
             do
             {
                 healthCheckResults = await _healthCheckService.ExecuteCheckServices(healthCheckType, cancellationToken);
-                LogHealthCheck(loggingOptions, healthCheckResults);
+                LoggingService.LogHealthCheck(_logger, loggingOptions, healthCheckResults);
 
                 if (healthCheckResults.HealthStatus != HealthStatus.Healthy)
                     await Task.Delay(intervalTimeInMS);
@@ -112,12 +112,14 @@ namespace HealthCheck
 
                     // Accept and close to acknowledge
                     using TcpClient client = await listener.AcceptTcpClientAsync(cancellationToken);
-                    LogProbe(loggingOptions, healthCheckType);
+                    LoggingService.LogProbe(_logger, loggingOptions, healthCheckType);
                 }
             }
 
-            catch (OperationCanceledException)
-            { }
+            catch (OperationCanceledException ex)
+            {
+                _logger.LogError(ex, "TCP Probe Service shutting down by request");
+            }
 
             catch (Exception ex)
             {
@@ -127,30 +129,5 @@ namespace HealthCheck
             await Task.CompletedTask;
         }
 
-
-        #region Logging
-        private void LogProbe(ProbeLoggingOptions loggingOptions, HealthCheckType healthCheckType)
-        {
-            if (loggingOptions.LogProbe)
-                _logger.LogInformation("Health Check Probe: {0}", healthCheckType.ToString());
-        }
-
-
-        private void LogHealthCheck(ProbeLoggingOptions loggingOptions, HealthCheckResults healthCheckResults)
-        {
-            if (loggingOptions.LogStatusWhenHealthy &&
-                healthCheckResults.HealthStatus == HealthStatus.Healthy)
-            {
-                _logger.LogInformation("Health Check Result: {0}", healthCheckResults.OverallStatus);
-            }
-
-            if (loggingOptions.LogStatusWhenNotHealthy &&
-                healthCheckResults.HealthStatus != HealthStatus.Healthy)
-            {
-                _logger.LogWarning("Health Check Result: {0}", healthCheckResults.OverallStatus);
-                _logger.LogWarning("Health Check Detailed Results: {0}", Json.Serialize(healthCheckResults));
-            }
-        }
-        #endregion
     }
 }
