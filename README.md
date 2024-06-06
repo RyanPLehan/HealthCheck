@@ -12,15 +12,12 @@ The ideal application is a Windows Service or Kuberentes/Docker container that r
 2.  *Startup* - Response is based upon probe type
     -  HTTP Probe - HTTP 200 OK if **ALL** health check results are Healthy, else HTTP 503 System Unavailable
     -  TCP Probe - Will not accept connection until **ALL** health checks are Healthy.
-        -  This will not be monitored after a one-time successfull connection.
 3.  *Readiness* - Response is based upon probe type
     -  HTTP Probe - HTTP 200 OK if **ALL** health check results are Healthy, else HTTP 503 System Unavailable
     -  TCP Probe - Will not accept connection until **ALL** health checks are Healthy.
-        -  This will not be monitored after a one-time successfull connection.
 4.  *Liveness* - Response is based upon probe type
     -  HTTP Probe - HTTP 200 OK if **ALL** health check results are Healthy, else HTTP 503 System Unavailable
     -  TCP Probe - Will not accept connection until **ALL** health checks are Healthy.
-        -  This will continuously be monitored.
 
 
 ## HTTP Probes
@@ -30,7 +27,7 @@ The ideal application is a Windows Service or Kuberentes/Docker container that r
     -  This means, health checks are executed when a request for a specific endpoint is requested.  Then the response is returned.
 3.  Supports both HTTP and/or HTTPS, but the following must be observed:
     -  HTTP will be supported when the **Port** has been assigned a valid port number.
-    -  HTTPS will be support when the **SslPort** has been assigned a valid port number
+    -  HTTPS will be supported when the **SslPort** has been assigned a valid port number
 4.  Only supports HTTP **GET** Method
 
 
@@ -51,21 +48,21 @@ Kuberentes has a *Startup*, *Readiness*, and *Liveness* Probe (in order)
 Therefore, if defined, the monitoring will not progress until the probe has occurred.  
 Meaning, if *Startup*, *Readiness* and *Liveness* are defined to be monitored.  
 Then the monitor will not respond to the *Readiness* probe until the *Startup* probe has occurred.  
-The same applies to Liveness, in that, the monitor will not respond to the *Liveness* probe until the *Readiness* probe has occurred.  
+The same applies to *Liveness*, in that, the monitor will not respond to the *Liveness* probe until the *Readiness* probe has occurred.  
 
 
 ## Health Checks
 1.  All Health Check Monitors have a default Health Check routine that will return a single result.  
     These defaults are in place so that a client can respond without the need of a custom written health check.
-    -  Status - By default will return **UnHealthy**
+    -  *Status* - By default will return **UnHealthy**
         -  This works in accordance to Microsoft's Health Check
-    -  Startup - By default will return **Healthy**
-    -  Readiness - By default will return **Healthy**
-    -  Liveness - By default will return **Healthy**
-2.  When the Status Monitor has been defined, the following should be noted.
+    -  *Startup* - By default will return **Healthy**
+    -  *Readiness* - By default will return **Healthy**
+    -  *Liveness* - By default will return **Healthy**
+2.  When the *Status* Monitor has been defined, the following should be noted.
     -  The client should have a custom written health check.
     -  When a custom written health check is added, the default will automatically be removed so that the result of **UnHealthy** is not returned.
-3.  When the Startup, Readiness or Liveness Monitor have been defined, the following should be noted.
+3.  When the *Startup*, *Readiness* or *Liveness* Monitor have been defined, the following should be noted.
     -  A custom written health check is optional.
     -  When a custom written health check is added, the default health check will automatically be removed.
 4.  Client custom written Health Checks
