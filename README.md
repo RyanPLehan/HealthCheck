@@ -35,7 +35,7 @@ The ideal application is a Windows Service or Kuberentes/Docker container that r
 1.  Only *Startup*, *Readiness* and *Liveness* health checks are supported
 2.  A particular Health Check monitor will respond to a TCP probe if a port number is assigned (ie not null) in the configuration.
 3.  Each Health Check Monitor can be assigned an individual or shared port number.
-4.  When probed, a **Successfull** indication is when the connection is accepted and then closed.
+4.  When probed, a **Successful** indication is when the connection is accepted and then closed.
 5.  This is **not** a Request/Response model.
     -  This means, health checks are executed until **ALL** results are Healthy.  Then a port will be listened upon for a probe.
 6.  Startup and Readiness monitors are a **One Time Occurrance**.
