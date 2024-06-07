@@ -10,7 +10,7 @@ namespace HealthCheck.Asserts
     ///   Provides a consistent means for verifying arguments and other invariants for a given
     ///   member. Because this can be shared across multiple projects, avoid using Resource files.
     /// </summary>
-    public static partial class Argument
+    internal static partial class Argument
     {
         /// <summary>
         ///   Ensures that an argument's value is a string comprised of only whitespace, though

@@ -1,5 +1,5 @@
-﻿using HealthCheck.Configuration;
-using System;
+﻿using System;
+using HealthCheck.Configuration;
 
 
 namespace HealthCheck.Asserts

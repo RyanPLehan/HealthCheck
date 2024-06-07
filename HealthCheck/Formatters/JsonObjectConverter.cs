@@ -14,7 +14,7 @@ namespace HealthCheck.Formatters
     /// https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/converters-how-to?pivots=dotnet-7-0#deserialize-inferred-types-to-object-properties
     /// https://github.com/dotnet/runtime/issues/29960
     /// </remarks>
-    public class JsonObjectConverter : JsonConverter<object>
+    internal class JsonObjectConverter : JsonConverter<object>
     {
         public override object? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {

@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 
 namespace HealthCheck.Formatters
 {
-    public static class Json
+    internal static class Json
     {
         private static JsonSerializerOptions? JsonSerializerObjectConverterOptions = null;
 
