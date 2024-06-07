@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using HealthCheck.Registration;
 
 
-namespace HealthCheck
+namespace HealthCheck.Services
 {
     /// <summary>
     /// This will execute the custom health check services
@@ -79,7 +79,7 @@ namespace HealthCheck
                 {
                     _logger.LogError(ex, "Health Check Custom Service: {0}", name);
                 }
-                    
+
                 finally
                 {
                     var kvp = new KeyValuePair<string, HealthCheckResult>(name, result);
