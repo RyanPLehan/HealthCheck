@@ -56,6 +56,15 @@ namespace HealthCheck.Services
         {
             IDictionary<HealthCheckType, string> healthCheckEndpoints = CreateHealthCheckEndpointDictionary(endpoints);
 
+            // Double check to make sure there is at least one endpoint
+            if (!healthCheckEndpoints.Any())
+            {
+                _logger.LogWarning("No endpoints defined.  HTTP Monitor shutting down.");
+                await Task.CompletedTask;
+                return;
+            }
+
+
             using (TcpListener listener = CreateTcpListener())
             {
                 listener.Start();
@@ -205,32 +214,6 @@ namespace HealthCheck.Services
             await clientStream.FlushAsync(cancellationToken);
         }
 
-        private IDictionary<HealthCheckType, string> CreateHealthCheckEndpointDictionary(EndpointAssignment endpointAssignment)
-        {
-            IDictionary<HealthCheckType, string> ret = new Dictionary<HealthCheckType, string>();
-
-            if (!string.IsNullOrWhiteSpace(endpointAssignment.Status))
-                ret.Add(HealthCheckType.Status, AppendTrailingForwardSlash(endpointAssignment.Status));
-
-            if (!string.IsNullOrWhiteSpace(endpointAssignment.Startup))
-                ret.Add(HealthCheckType.Startup, AppendTrailingForwardSlash(endpointAssignment.Startup));
-
-            if (!string.IsNullOrWhiteSpace(endpointAssignment.Readiness))
-                ret.Add(HealthCheckType.Readiness, AppendTrailingForwardSlash(endpointAssignment.Readiness));
-
-            if (!string.IsNullOrWhiteSpace(endpointAssignment.Liveness))
-                ret.Add(HealthCheckType.Liveness, AppendTrailingForwardSlash(endpointAssignment.Liveness));
-
-            return ret;
-        }
-
-        private HealthCheckType GetHealthCheckType(string endpoint, IDictionary<HealthCheckType, string> expectedEndpoints)
-        {
-            return expectedEndpoints.Where(kvp => endpoint.EndsWith(kvp.Value, StringComparison.OrdinalIgnoreCase))
-                                    .Select(kvp => kvp.Key)
-                                    .FirstOrDefault();
-        }
-
 
         private string CreateResponse(HealthCheckType healthCheckType, HealthCheckResults healthCheckResults)
         {
@@ -281,5 +264,32 @@ namespace HealthCheck.Services
             return sb.ToString();
         }
         #endregion
+
+
+        private IDictionary<HealthCheckType, string> CreateHealthCheckEndpointDictionary(EndpointAssignment endpointAssignment)
+        {
+            IDictionary<HealthCheckType, string> ret = new Dictionary<HealthCheckType, string>();
+
+            if (!string.IsNullOrWhiteSpace(endpointAssignment?.Status))
+                ret.Add(HealthCheckType.Status, AppendTrailingForwardSlash(endpointAssignment.Status));
+
+            if (!string.IsNullOrWhiteSpace(endpointAssignment?.Startup))
+                ret.Add(HealthCheckType.Startup, AppendTrailingForwardSlash(endpointAssignment.Startup));
+
+            if (!string.IsNullOrWhiteSpace(endpointAssignment?.Readiness))
+                ret.Add(HealthCheckType.Readiness, AppendTrailingForwardSlash(endpointAssignment.Readiness));
+
+            if (!string.IsNullOrWhiteSpace(endpointAssignment?.Liveness))
+                ret.Add(HealthCheckType.Liveness, AppendTrailingForwardSlash(endpointAssignment.Liveness));
+
+            return ret;
+        }
+
+        private HealthCheckType GetHealthCheckType(string endpoint, IDictionary<HealthCheckType, string> expectedEndpoints)
+        {
+            return expectedEndpoints.Where(kvp => endpoint.EndsWith(kvp.Value, StringComparison.OrdinalIgnoreCase))
+                                    .Select(kvp => kvp.Key)
+                                    .FirstOrDefault();
+        }
     }
 }

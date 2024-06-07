@@ -39,7 +39,7 @@ namespace HealthCheck.Services
         private ProbeLoggingOptions? _probeLoggingOptions;
         private X509Certificate2? _serverCertificate;
 
-        public HttpsProbeService(ILogger<HttpProbeService> logger,
+        public HttpsProbeService(ILogger<HttpsProbeService> logger,
                                  IHealthCheckService healthCheckService)
             : base(logger, healthCheckService)
         {

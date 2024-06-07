@@ -86,7 +86,9 @@ namespace HealthCheck
         private void ValidateOptions()
         {
             Asserts.HealthCheckOptionsAssert.AssertNoProbesConfigured(this._options);
-            Asserts.HealthCheckOptionsAssert.AssertNotSamePort(_options.HttpProbe, _options.TcpProbe);
+            Asserts.HealthCheckOptionsAssert.AssertNotSamePort(_options.HttpProbe?.Port, _options.HttpProbe?.SslPort);
+            Asserts.HealthCheckOptionsAssert.AssertNotSamePort(_options.HttpProbe?.Port, _options.TcpProbe);
+            Asserts.HealthCheckOptionsAssert.AssertNotSamePort(_options.HttpProbe?.SslPort, _options.TcpProbe);
 
             if (_options.HttpProbe?.Port != null)
                 Asserts.HealthCheckOptionsAssert.AssertNotValidPort(_options.HttpProbe.Port.Value);
