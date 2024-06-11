@@ -6,22 +6,31 @@ namespace HealthCheck.Tests.TcpProbe
     [TestClass]
     public class DefaultCheckTest
     {
-        private readonly Program _program;
+        private static Program _program;
 
-        public DefaultCheckTest()
+        [ClassInitialize]
+        public static async Task ClassInitialize(TestContext testContext)
         {
-            _program = new Program().ConfigureServices(ConfigureServices);
-            _program.Initialize();
+            _program = new Program().ConfigureServices(services => services.AddHealthChecks());
+            await _program.Initialize();
         }
 
-        [TestInitialize]
-        public void Initialize()
-        { }
+        [ClassCleanup]
+        public static async Task ClassCleanup()
+        {
+            await _program.CleanUp();
+        }
 
+
+        [TestInitialize]
+        public void TestInitialize()
+        { }
 
         [TestCleanup]
-        public void Cleanup()
+        public void TestCleanup()
         { }
+
+
 
         [TestMethod]
         public void TestMethod1()
@@ -33,10 +42,14 @@ namespace HealthCheck.Tests.TcpProbe
             // Assert
         }
 
-        private void ConfigureServices(IServiceCollection services)
+        [TestMethod]
+        public void TestMethod2()
         {
-            // Register Health Check Worker and Default Checks
-            services.AddHealthChecks();     
+            // Arrange
+            int i = 10;
+            // Act
+            i++;
+            // Assert
         }
     }
 }

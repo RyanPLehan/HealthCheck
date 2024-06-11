@@ -19,7 +19,7 @@ namespace HealthCheck.Configuration
         /// <param name="configuration"></param>
         /// <returns></returns>
         public static HealthCheckOptions Build(IConfiguration configuration)
-            => Build(configuration, CONFIGURATION_SECTION);
+            => Build(configuration.GetSection(CONFIGURATION_SECTION));
 
 
         /// <summary>
@@ -28,10 +28,10 @@ namespace HealthCheck.Configuration
         /// <param name="configuration"></param>
         /// <param name="sectionName"></param>
         /// <returns></returns>
-        public static HealthCheckOptions Build(IConfiguration configuration, string sectionName)
+        public static HealthCheckOptions Build(IConfigurationSection namedConfigurationSection)
         {
             HealthCheckOptions options = new HealthCheckOptions();
-            configuration.GetSection(sectionName).Bind(options);
+            namedConfigurationSection.Bind(options);
             return options;
         }
 

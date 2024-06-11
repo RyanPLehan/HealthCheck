@@ -8,6 +8,7 @@ namespace HealthCheck.Tests
 {
     internal class Program
     {
+        private IHost _host;
         private IServiceProvider _serviceProvider;
         private IServiceCollection _serviceCollection = null;
         private IConfigurationManager _configurationManager = null;
@@ -33,18 +34,28 @@ namespace HealthCheck.Tests
         }
 
 
-        public void Initialize()
+        public async Task Initialize()
         {
             var builder = Host.CreateApplicationBuilder();
-
-            _configurationManager = builder.Configuration;
-            _serviceCollection = builder.Services;
 
             ConfigureOptions(builder.Configuration, builder.Services);
             ConfigureServices(builder.Services);
 
-            var host = builder.Build();
-            host.Run();
+            _host = builder.Build();
+
+            _configurationManager = builder.Configuration;
+            _serviceCollection = builder.Services;
+            _serviceProvider = _host.Services;
+
+            _host.RunAsync();
+
+            await Task.Delay(250);          // Delay to give time for host to start background service
+        }
+
+        public async Task CleanUp()
+        {
+            // Attempt a graceful shutdown
+            await _host.StopAsync();
         }
 
         private IServiceCollection ConfigureOptions(ConfigurationManager configuration, IServiceCollection services)

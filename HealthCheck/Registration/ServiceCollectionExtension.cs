@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using HealthCheck.Configuration;
 using HealthCheck.DefaultChecks;
 using HealthCheck.Services;
+using Microsoft.Extensions.Configuration;
+using System.Reflection.Metadata.Ecma335;
 
 namespace HealthCheck.Registration
 {
@@ -11,9 +13,6 @@ namespace HealthCheck.Registration
     {
         public static IHealthChecksBuilder AddHealthChecks(this IServiceCollection services)
         {
-            // Explicity Set Configuration
-            // services.Configure<HealthCheckOptions>(configuration.GetSection(HealthCheckOptionsBuilder.CONFIGURATION_SECTION));
-
             var builder = new HealthChecksBuilder(services)
                             .AddCheckStatus<StatusCheck>("Default Status Check")
                             .AddCheckStartup<StartupCheck>("Default Startup Check")
@@ -29,5 +28,35 @@ namespace HealthCheck.Registration
 
             return builder;
         }
+
+        /*
+        /// <summary>
+        /// Add Health Checks
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="namedConfigurationSection">
+        /// <see cref="https://learn.microsoft.com/en-us/dotnet/core/extensions/options-library-authors#iconfiguration-parameter"/> 
+        /// </param>
+        /// <returns></returns>
+        public static IHealthChecksBuilder AddHealthChecks(this IServiceCollection services, IConfigurationSection namedConfigurationSection)
+        {
+            // Explicity Set Configuration from named configutation section passed in
+            // Any one of these will work
+            //services.AddOptions<HealthCheckOptions>().BindConfiguration(HealthCheckOptionsBuilder.CONFIGURATION_SECTION);     
+            //services.AddOptions().Configure<HealthCheckOptions>(configuration.GetSection(HealthCheckOptionsBuilder.CONFIGURATION_SECTION))
+            //services.Configure<HealthCheckOptions>(configuration.GetSection(HealthCheckOptionsBuilder.CONFIGURATION_SECTION));
+            //services.AddOptions().Configure<HealthCheckOptions>(namedConfigurationSection);            
+            //services.Configure<HealthCheckOptions>(namedConfigurationSection);
+
+            bool isValid = (namedConfigurationSection.GetChildren().Count() > 0);
+
+            services.AddOptions<HealthCheckOptions>()
+                    .Bind(namedConfigurationSection)
+                    .Validate((_) => isValid)
+                    .ValidateOnStart();
+
+            return AddHealthChecks(services);
+        }
+        */
     }
 }
