@@ -1,10 +1,11 @@
-using Microsoft.Extensions.DependencyInjection;
 using HealthCheck.Registration;
+using System.Net.Sockets;
 
-namespace HealthCheck.Tests.TcpProbe
+
+namespace HealthCheck.Tests
 {
     [TestClass]
-    public class DefaultCheckTest
+    public class TcpProbeTest
     {
         private static Program _program;
 
@@ -33,23 +34,25 @@ namespace HealthCheck.Tests.TcpProbe
 
 
         [TestMethod]
-        public void TestMethod1()
+        [DataRow("Startup", 8081, 1)]
+        [DataRow("Readiness", 8081, 1)]
+        [DataRow("Liveness", 8081, 3)]
+        public async Task TestPortMonitor(string monitor, int port, int iterationCount)
         {
             // Arrange
-            int i = 10;
-            // Act
-            i++;
-            // Assert
-        }
+            for (int i = 0; i < iterationCount; i++)
+            {
+                // Act
+                using (TcpClient client = new TcpClient())
+                {
+                    await client.ConnectAsync(UrlBuilder.Host, port);
+                }
 
-        [TestMethod]
-        public void TestMethod2()
-        {
-            // Arrange
-            int i = 10;
-            // Act
-            i++;
+                await Task.Delay(250);      // Simulate a delay
+            }
+
             // Assert
+            // No Errors
         }
     }
 }
