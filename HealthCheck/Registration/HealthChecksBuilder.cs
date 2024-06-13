@@ -232,8 +232,8 @@ namespace HealthCheck.Registration
             var serviceDescriptor = _services.Where(x => x.ServiceType == typeof(IHealthCheck) &&
                                                          (HealthCheckType)x.ServiceKey == healthCheckType &&
                                                          x.KeyedImplementationType == type) 
-
                                              .FirstOrDefault();
+
             if (serviceDescriptor != null) 
                 _services.Remove(serviceDescriptor);
         }

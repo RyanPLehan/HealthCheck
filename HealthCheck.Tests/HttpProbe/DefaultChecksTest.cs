@@ -2,27 +2,19 @@ using System.Net.Http;
 using HealthCheck.Registration;
 using HealthCheck.Tests.Formatters;
 
-[assembly: DoNotParallelize]
-namespace HealthCheck.Tests
+
+namespace HealthCheck.Tests.HttpProbe
 {
     [TestClass]
-    public class DefaultHttpProbeTest
+    public class DefaultChecksTest
     {
-        private static Program _program;
-
         [ClassInitialize]
         public static async Task ClassInitialize(TestContext testContext)
-        {
-            _program = new Program().ConfigureServices(services => services.AddHealthChecks());
-            await _program.Initialize();
-        }
+        { }
 
         [ClassCleanup]
         public static async Task ClassCleanup()
-        {
-            await _program.CleanUp();
-        }
-
+        { }
 
         [TestInitialize]
         public void TestInitialize()
@@ -31,6 +23,7 @@ namespace HealthCheck.Tests
         [TestCleanup]
         public void TestCleanup()
         { }
+
 
         [TestMethod]
         [DataRow("health/status")]

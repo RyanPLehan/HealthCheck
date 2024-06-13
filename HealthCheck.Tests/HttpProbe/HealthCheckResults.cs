@@ -1,7 +1,6 @@
 ﻿using System;
-using HealthCheck;
 
-namespace HealthCheck.Tests
+namespace HealthCheck.Tests.HttpProbe
 {
     internal class HealthCheckResults
     {

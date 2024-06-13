@@ -1,27 +1,20 @@
 using HealthCheck.Registration;
+using HealthCheck.Tests.HttpProbe;
 using System.Net.Sockets;
 
 
-namespace HealthCheck.Tests
+namespace HealthCheck.Tests.TcpProbe
 {
     [TestClass]
-    public class TcpProbeTest
+    public class DefaultChecksTest 
     {
-        private static Program _program;
-
         [ClassInitialize]
         public static async Task ClassInitialize(TestContext testContext)
-        {
-            _program = new Program().ConfigureServices(services => services.AddHealthChecks());
-            await _program.Initialize();
-        }
+        { }
 
         [ClassCleanup]
         public static async Task ClassCleanup()
-        {
-            await _program.CleanUp();
-        }
-
+        { }
 
         [TestInitialize]
         public void TestInitialize()

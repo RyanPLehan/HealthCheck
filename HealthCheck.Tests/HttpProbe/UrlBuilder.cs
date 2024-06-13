@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HealthCheck.Tests
+namespace HealthCheck.Tests.HttpProbe
 {
     internal static class UrlBuilder
     {
