@@ -100,10 +100,10 @@ namespace HealthCheck.Services
 
                             // Process valid health check
                             LoggingService.LogProbe(_logger, loggingOptions, healthCheckType);
-                            HealthCheckResults healthCheckResults = await _healthCheckService.ExecuteCheckServices(healthCheckType, cancellationToken);
-                            var okResponse = CreateResponse(healthCheckType, healthCheckResults);
+                            HealthReport healthReport = await _healthCheckService.ExecuteCheckServices(healthCheckType, cancellationToken);
+                            var okResponse = CreateResponse(healthCheckType, healthReport);
                             await SendResponseMessage(clientStream, okResponse, cancellationToken);
-                            LoggingService.LogHealthCheck(_logger, loggingOptions, healthCheckResults);
+                            LoggingService.LogHealthCheck(_logger, loggingOptions, healthReport);
                         }
 
                         catch (AuthenticationException ex)
@@ -215,17 +215,17 @@ namespace HealthCheck.Services
         }
 
 
-        private string CreateResponse(HealthCheckType healthCheckType, HealthCheckResults healthCheckResults)
+        private string CreateResponse(HealthCheckType healthCheckType, HealthReport healthReport)
         {
             string httpResponse;
             switch (healthCheckType)
             {
                 case HealthCheckType.Status:
-                    httpResponse = GenerateHttpResponse(HttpStatusCode.OK, healthCheckResults);
+                    httpResponse = GenerateHttpResponse(HttpStatusCode.OK, healthReport);
                     break;
 
                 default:
-                    if (healthCheckResults.HealthStatus == HealthStatus.Healthy)
+                    if (healthReport.Status == HealthStatus.Healthy)
                         httpResponse = GenerateHttpResponse(HttpStatusCode.OK);
                     else
                         httpResponse = GenerateHttpResponse(HttpStatusCode.ServiceUnavailable);
@@ -235,33 +235,54 @@ namespace HealthCheck.Services
             return httpResponse;
         }
 
-        private string GenerateHttpResponse(HttpStatusCode httpStatusCode, HealthCheckResults? healthCheckResults = null)
+        private string GenerateHttpResponse(HttpStatusCode httpStatusCode)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            sb.AppendFormat("HTTP/1.1 {0} {1}", (int)httpStatusCode, httpStatusCode.ToString());
+            sb.AppendLine();
+            sb.Append("Content-Length: 0");
+            sb.AppendLine();
+            sb.AppendLine();        // Must provide 2 \r\n
+
+            return sb.ToString();
+        }
+
+        private string GenerateHttpResponse(HttpStatusCode httpStatusCode, HealthReport healthReport)
         {
             StringBuilder sb = new StringBuilder();
 
             sb.AppendFormat("HTTP/1.1 {0} {1}", (int)httpStatusCode, httpStatusCode.ToString());
             sb.AppendLine();
 
-            if (healthCheckResults != null)
-            {
-                string json = Json.Serialize(healthCheckResults);
-                sb.AppendFormat("Content-Length: {0}", Encoding.UTF8.GetByteCount(json));
-                sb.AppendLine();
-                sb.AppendFormat("Content-Type: {0}", Json.JSON_CONTENT_TYPE);
-                sb.AppendLine();
-                sb.AppendLine();        // Must provide 2 \r\n before content
-                sb.Append(json);
-                sb.AppendLine();
-            }
-            else
-            {
-                sb.Append("Content-Length: 0");
-                sb.AppendLine();
-                sb.AppendLine();        // Must provide 2 \r\n
-            }
-
+            string json = CreateHealthCheckResponse(healthReport);
+            sb.AppendFormat("Content-Length: {0}", Encoding.UTF8.GetByteCount(json));
+            sb.AppendLine();
+            sb.AppendFormat("Content-Type: {0}", Json.JSON_CONTENT_TYPE);
+            sb.AppendLine();
+            sb.AppendLine();        // Must provide 2 \r\n before content
+            sb.Append(json);
+            sb.AppendLine();
 
             return sb.ToString();
+        }
+
+        private string CreateHealthCheckResponse(HealthReport report)
+        {
+            return Json.Serialize(
+                new
+                {
+                    Status = report.Status.ToString(),
+                    HealthChecks = report.Entries.Select(e => new
+                    {
+                        Key = e.Key,
+                        Status = e.Value.Status.ToString(),
+                        Description = e.Value.Description,
+                        Data = e.Value.Data,
+                        Exception = e.Value.Exception?.Message,
+                    }),
+                }
+            );
         }
         #endregion
 

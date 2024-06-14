@@ -2,9 +2,9 @@
 
 namespace HealthCheck.Tests.HttpProbe
 {
-    internal class HealthCheckResults
+    internal class HealthReport
     {
-        public string OverallStatus { get; set; }
+        public string Status { get; set; }
 
         public IEnumerable<KeyValuePair<string, string>> HealthChecks { get; set; }
     }

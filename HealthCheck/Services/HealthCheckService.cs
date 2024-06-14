@@ -29,22 +29,22 @@ namespace HealthCheck.Services
         }
 
 
-        public async Task<HealthCheckResults> CheckLiveness(CancellationToken cancellationToken = default)
+        public async Task<HealthReport> CheckLiveness(CancellationToken cancellationToken = default)
         {
             return await ExecuteCheckServices(HealthCheckType.Liveness, cancellationToken);
         }
 
-        public async Task<HealthCheckResults> CheckReadiness(CancellationToken cancellationToken = default)
+        public async Task<HealthReport> CheckReadiness(CancellationToken cancellationToken = default)
         {
             return await ExecuteCheckServices(HealthCheckType.Readiness, cancellationToken);
         }
 
-        public async Task<HealthCheckResults> CheckStartup(CancellationToken cancellationToken = default)
+        public async Task<HealthReport> CheckStartup(CancellationToken cancellationToken = default)
         {
             return await ExecuteCheckServices(HealthCheckType.Startup, cancellationToken);
         }
 
-        public async Task<HealthCheckResults> CheckStatus(CancellationToken cancellationToken = default)
+        public async Task<HealthReport> CheckStatus(CancellationToken cancellationToken = default)
         {
             return await ExecuteCheckServices(HealthCheckType.Status, cancellationToken);
         }
@@ -56,7 +56,7 @@ namespace HealthCheck.Services
             return (T)_serviceProvider.GetRequiredService(typeof(T));
         }
 
-        public async Task<HealthCheckResults> ExecuteCheckServices(HealthCheckType healthCheckType, CancellationToken cancellationToken)
+        public async Task<HealthReport> ExecuteCheckServices(HealthCheckType healthCheckType, CancellationToken cancellationToken)
         {
             IList<KeyValuePair<string, HealthCheckResult>> results = new List<KeyValuePair<string, HealthCheckResult>>();
 
@@ -87,7 +87,7 @@ namespace HealthCheck.Services
                 }
             }
 
-            return new HealthCheckResults(DetermineOverallStatus(results), results);
+            return new HealthReport(healthCheckType, DetermineOverallStatus(results), results);
         }
 
         private HealthStatus DetermineOverallStatus(IEnumerable<KeyValuePair<string, HealthCheckResult>> results)

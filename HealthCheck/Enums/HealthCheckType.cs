@@ -1,7 +1,7 @@
 ﻿
 namespace HealthCheck
 {
-    internal enum HealthCheckType: int
+    public enum HealthCheckType: int
     {
         Unknown = 0,
         Status = 1,

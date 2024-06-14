@@ -15,19 +15,19 @@ namespace HealthCheck.Services
         }
 
 
-        public static void LogHealthCheck(ILogger logger, ProbeLoggingOptions loggingOptions, HealthCheckResults healthCheckResults)
+        public static void LogHealthCheck(ILogger logger, ProbeLoggingOptions loggingOptions, HealthReport healthReport)
         {
             if (loggingOptions.LogStatusWhenHealthy &&
-                healthCheckResults.HealthStatus == HealthStatus.Healthy)
+                healthReport.Status == HealthStatus.Healthy)
             {
-                logger.LogInformation("Health Check Result: {0}", healthCheckResults.OverallStatus);
+                logger.LogInformation("Health Check Result: {0}", healthReport.Status.ToString());
             }
 
             if (loggingOptions.LogStatusWhenNotHealthy &&
-                healthCheckResults.HealthStatus != HealthStatus.Healthy)
+                healthReport.Status != HealthStatus.Healthy)
             {
-                logger.LogWarning("Health Check Result: {0}", healthCheckResults.OverallStatus);
-                logger.LogWarning("Health Check Detailed Results: {0}", Json.Serialize(healthCheckResults));
+                logger.LogWarning("Health Check Result: {0}", healthReport.Status.ToString());
+                logger.LogWarning("Health Check Detailed Results: {0}", Json.Serialize(healthReport));
             }
         }
 

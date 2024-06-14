@@ -39,11 +39,11 @@ namespace HealthCheck.Tests.HttpProbe
                 {
                     using (HttpResponseMessage response = await client.SendAsync(request))
                     {
-                        HealthCheckResults results = await GetResults(response);
+                        HealthReport results = await GetResults(response);
 
                         // Assert
                         Assert.IsTrue(response.StatusCode == System.Net.HttpStatusCode.OK);
-                        Assert.IsTrue(results.OverallStatus.Equals("unhealthy", StringComparison.OrdinalIgnoreCase));
+                        Assert.IsTrue(results.Status.Equals("unhealthy", StringComparison.OrdinalIgnoreCase));
                     }
                 }
             }
@@ -63,11 +63,11 @@ namespace HealthCheck.Tests.HttpProbe
                 {
                     using (HttpResponseMessage response = await client.SendAsync(request))
                     {
-                        HealthCheckResults results = await GetResults(response);
+                        HealthReport results = await GetResults(response);
 
                         // Assert
                         Assert.IsTrue(response.StatusCode == System.Net.HttpStatusCode.OK);
-                        Assert.IsTrue(results.OverallStatus.Equals("unhealthy", StringComparison.OrdinalIgnoreCase));
+                        Assert.IsTrue(results.Status.Equals("unhealthy", StringComparison.OrdinalIgnoreCase));
                     }
                 }
             }
@@ -123,10 +123,10 @@ namespace HealthCheck.Tests.HttpProbe
         }
 
 
-        private async Task<HealthCheckResults> GetResults(HttpResponseMessage httpResponse)
+        private async Task<HealthReport> GetResults(HttpResponseMessage httpResponse)
         {
             string json = await httpResponse.Content.ReadAsStringAsync();
-            return Json.Deserialize<HealthCheckResults>(json);
+            return Json.Deserialize<HealthReport>(json);
         }
     }
 }

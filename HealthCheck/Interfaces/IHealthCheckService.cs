@@ -6,12 +6,12 @@ namespace HealthCheck
 {
     public interface IHealthCheckService
     {
-        Task<HealthCheckResults> CheckStatus(CancellationToken cancellationToken);
-        Task<HealthCheckResults> CheckStartup(CancellationToken cancellationToken);
-        Task<HealthCheckResults> CheckReadiness(CancellationToken cancellationToken);
-        Task<HealthCheckResults> CheckLiveness(CancellationToken cancellationToken);
+        Task<HealthReport> CheckStatus(CancellationToken cancellationToken);
+        Task<HealthReport> CheckStartup(CancellationToken cancellationToken);
+        Task<HealthReport> CheckReadiness(CancellationToken cancellationToken);
+        Task<HealthReport> CheckLiveness(CancellationToken cancellationToken);
 
         internal T GetProbeService<T>();
-        internal Task<HealthCheckResults> ExecuteCheckServices(HealthCheckType healthCheckType, CancellationToken cancellationToken);
+        internal Task<HealthReport> ExecuteCheckServices(HealthCheckType healthCheckType, CancellationToken cancellationToken);
     }
 }

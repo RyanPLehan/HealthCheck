@@ -4,11 +4,8 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading.Tasks;
-using System.Text;
-using System.Text.Json.Serialization;
 using HealthCheck.Configuration;
-using HealthCheck.Formatters;
-using System.Threading;
+
 
 namespace HealthCheck.Services
 {
@@ -79,23 +76,23 @@ namespace HealthCheck.Services
         }
 
 
-        private async Task<HealthCheckResults> ExecuteIntervalCheck(byte intervalInSeconds, HealthCheckType healthCheckType, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
+        private async Task<HealthReport> ExecuteIntervalCheck(byte intervalInSeconds, HealthCheckType healthCheckType, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
         {
             int intervalTimeInMS = intervalInSeconds * 1000;        // Convert from seconds to milliseconds
-            HealthCheckResults healthCheckResults;
+            HealthReport healthReport;
 
             // Loop until the overall status is healthy
             do
             {
-                healthCheckResults = await _healthCheckService.ExecuteCheckServices(healthCheckType, cancellationToken);
-                LoggingService.LogHealthCheck(_logger, loggingOptions, healthCheckResults);
+                healthReport = await _healthCheckService.ExecuteCheckServices(healthCheckType, cancellationToken);
+                LoggingService.LogHealthCheck(_logger, loggingOptions, healthReport);
 
-                if (healthCheckResults.HealthStatus != HealthStatus.Healthy)
+                if (healthReport.Status != HealthStatus.Healthy)
                     await Task.Delay(intervalTimeInMS);
 
-            } while (!cancellationToken.IsCancellationRequested && healthCheckResults.HealthStatus != HealthStatus.Healthy);
+            } while (!cancellationToken.IsCancellationRequested && healthReport.Status != HealthStatus.Healthy);
 
-            return healthCheckResults;
+            return healthReport;
         }
 
 
