@@ -18,7 +18,7 @@ namespace HealthCheck.DefaultChecks
         public Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken)
         {            
             
-            return Task.FromResult(HealthCheckResult.Healthy());
+            return Task.FromResult(HealthCheckResult.Healthy("By default, always healthy"));
         }
     }
 }

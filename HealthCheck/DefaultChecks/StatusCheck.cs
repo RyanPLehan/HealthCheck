@@ -17,7 +17,7 @@ namespace HealthCheck.DefaultChecks
     {
         public Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken)
         {            
-            return Task.FromResult(HealthCheckResult.Unhealthy());
+            return Task.FromResult(HealthCheckResult.Unhealthy("In compliance with Microsoft, by default, always unhealthy"));
         }
     }
 }
