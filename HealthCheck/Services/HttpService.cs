@@ -225,10 +225,10 @@ namespace HealthCheck.Services
                     break;
 
                 default:
-                    if (healthReport.Status == HealthStatus.Healthy)
-                        httpResponse = GenerateHttpResponse(HttpStatusCode.OK);
-                    else
+                    if (healthReport.Status == HealthStatus.UnHealthy)
                         httpResponse = GenerateHttpResponse(HttpStatusCode.ServiceUnavailable);
+                    else
+                        httpResponse = GenerateHttpResponse(HttpStatusCode.OK);
                     break;
             }
 

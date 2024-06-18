@@ -81,13 +81,13 @@ namespace HealthCheck.Services
             int intervalTimeInMS = intervalInSeconds * 1000;        // Convert from seconds to milliseconds
             HealthReport healthReport;
 
-            // Loop until the overall status is healthy
+            // Loop until the overall status is healthy or Degraded
             do
             {
                 healthReport = await _healthCheckService.ExecuteCheckServices(healthCheckType, cancellationToken);
                 LoggingService.LogHealthCheck(_logger, loggingOptions, healthReport);
 
-                if (healthReport.Status != HealthStatus.Healthy)
+                if (healthReport.Status != HealthStatus.UnHealthy)
                     await Task.Delay(intervalTimeInMS);
 
             } while (!cancellationToken.IsCancellationRequested && healthReport.Status != HealthStatus.Healthy);
