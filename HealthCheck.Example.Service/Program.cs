@@ -9,6 +9,9 @@ namespace HealthCheck.Example.Service
         {
             var builder = Host.CreateApplicationBuilder(args);
 
+            // Setup Health Check Monitor
+            builder.UseHealthCheckMonitor();
+
             ConfigureOptions(builder.Configuration, builder.Services);
             ConfigureServices(builder.Services);
             ConfigureWorkers(builder.Services);
@@ -24,6 +27,12 @@ namespace HealthCheck.Example.Service
 
         private static IServiceCollection ConfigureServices(IServiceCollection services)
         {
+            // Specify the monitoring services
+            services.UseHttpMonitor();
+            services.UseHttpsMonitor();
+            services.UseTcpMonitor();
+
+            // Specify Custom Health Checks
             services.AddHealthChecks()     // Auto adds default checks
                     .AddCheckStartup<SystemCheck>("Preflight System Check")
                     .AddCheckReadiness<DatabaseCheck>("Database Check")
@@ -34,10 +43,6 @@ namespace HealthCheck.Example.Service
                     .AddCheckStatus<DatabaseCheck>("Database Check")
                     .AddCheckStatus<ApiCheck>("Internal API Check")
                     .AddCheckStatus<ServerPingCheck>("File Server Ping Check");
-
-            services.UseHttpMonitor();
-            services.UseHttpsMonitor();
-            services.UseTcpMonitor();
 
             return services;
         }

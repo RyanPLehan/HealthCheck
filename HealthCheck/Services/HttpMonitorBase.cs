@@ -33,15 +33,15 @@ namespace HealthCheck.Services
     ///     1.  If the request is not a HTTP GET method, then a 405 Method Not Allowed is returned
     ///     2.  If an endpoint is not matched, then a 404 Not Found is returned
     /// </remarks>
-    internal abstract class HttpService
+    internal abstract class HttpMonitorBase
     {
         protected const int MAX_REQUEST_MESSAGE_SIZE = 1024;
         private readonly ILogger _logger;
         private readonly IHealthCheckService _healthCheckService;
 
 
-        protected HttpService(ILogger logger,
-                              IHealthCheckService healthCheckService)
+        protected HttpMonitorBase(ILogger logger,
+                                  IHealthCheckService healthCheckService)
         {
             ArgumentNullException.ThrowIfNull(logger, nameof(logger));
             ArgumentNullException.ThrowIfNull(healthCheckService, nameof(healthCheckService));

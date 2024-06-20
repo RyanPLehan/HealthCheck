@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using HealthCheck.Registration;
 using System.Data;
+using Microsoft.Extensions.Internal;
 
 namespace HealthCheck.Tests
 {
@@ -23,6 +24,9 @@ namespace HealthCheck.Tests
                 return;
 
             var builder = Host.CreateApplicationBuilder();
+
+            // Setup Health Check Monitor
+            builder.UseHealthCheckMonitor();
 
             ConfigureOptions(builder.Configuration, builder.Services);
             ConfigureServices(builder.Services);
@@ -66,6 +70,10 @@ namespace HealthCheck.Tests
 
         private static IServiceCollection ConfigureServices(IServiceCollection services)
         {
+            // Specify the monitoring services
+            services.UseHttpMonitor();
+            services.UseHttpsMonitor();
+            services.UseTcpMonitor();
             services.AddHealthChecks();     // Auto adds default checks
             return services;
         }

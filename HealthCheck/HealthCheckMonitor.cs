@@ -6,16 +6,16 @@ using Microsoft.Extensions.Options;
 
 namespace HealthCheck
 {
-    public class HealthCheckServer : BackgroundService
+    internal class HealthCheckMonitor : BackgroundService
     {
-        private readonly ILogger<HealthCheckServer> _logger;
+        private readonly ILogger<HealthCheckMonitor> _logger;
         private readonly IHealthCheckService _healthCheckService;
         private readonly HealthCheckOptions _options;
 
 
-        public HealthCheckServer(ILogger<HealthCheckServer> logger,
-                                 IHealthCheckService healthCheckService,
-                                 IConfiguration configuration)
+        public HealthCheckMonitor(ILogger<HealthCheckMonitor> logger,
+                                  IHealthCheckService healthCheckService,
+                                  IConfiguration configuration)
         {
             ArgumentNullException.ThrowIfNull(logger, nameof(logger));
             ArgumentNullException.ThrowIfNull(healthCheckService, nameof(healthCheckService));
@@ -28,7 +28,7 @@ namespace HealthCheck
         }
 
 
-        public HealthCheckServer(ILogger<HealthCheckServer> logger,
+        public HealthCheckMonitor(ILogger<HealthCheckMonitor> logger,
                                  IHealthCheckService healthCheckService,
                                  HealthCheckOptions options)
         {
@@ -48,12 +48,12 @@ namespace HealthCheck
             try
             {
                 ValidateOptions();
-                _logger.LogInformation("Starting: Health Check Worker");
+                _logger.LogInformation("Starting: Health Check Monitor");
                 task = base.StartAsync(cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Health Check Worker failed to start");
+                _logger.LogError(ex, "Health Check Monitor failed to start");
                 task = Task.FromException(ex);
             }
 
@@ -62,19 +62,19 @@ namespace HealthCheck
 
         public override Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Stopping: Health Check Worker");
+            _logger.LogInformation("Stopping: Health Check Monitor");
             return base.StopAsync(cancellationToken);
         }
 
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Health Check Worker running at: {time}", DateTimeOffset.Now);
+            _logger.LogInformation("Health Check Monitor running at: {time}", DateTimeOffset.Now);
 
             IList<Task> tasks = new List<Task>();
-            tasks.Add(StartHttpProbe(cancellationToken));
-            tasks.Add(StartHttpsProbe(cancellationToken));
-            tasks.Add(StartTcpProbe(cancellationToken));
+            tasks.Add(StartHttpMonitor(cancellationToken));
+            tasks.Add(StartHttpsMonitor(cancellationToken));
+            tasks.Add(StartTcpMonitor(cancellationToken));
 
             // Wait for all tasks to complete
             await Task.WhenAll(tasks);
@@ -110,39 +110,39 @@ namespace HealthCheck
         }
 
 
-        private Task StartHttpProbe(CancellationToken cancellationToken)
+        private Task StartHttpMonitor(CancellationToken cancellationToken)
         {
             Task task = Task.CompletedTask;
 
             if (_options.HttpProbe?.Port != null)
             {
-                IHttpProbeService service = _healthCheckService.GetProbeService<IHttpProbeService>();
+                IHttpMonitor service = _healthCheckService.GetMonitorService<IHttpMonitor>();
                 task = service.Monitor(_options.HttpProbe, _options.Logging, cancellationToken);
             }
 
             return task;
         }
 
-        private Task StartHttpsProbe(CancellationToken cancellationToken)
+        private Task StartHttpsMonitor(CancellationToken cancellationToken)
         {
             Task task = Task.CompletedTask;
 
             if (_options.HttpProbe?.SslPort != null)
             {
-                IHttpsProbeService service = _healthCheckService.GetProbeService<IHttpsProbeService>();
+                IHttpsMonitor service = _healthCheckService.GetMonitorService<IHttpsMonitor>();
                 task = service.Monitor(_options.HttpProbe, _options.Logging, cancellationToken);
             }
 
             return task;
         }
 
-        private Task StartTcpProbe(CancellationToken cancellationToken)
+        private Task StartTcpMonitor(CancellationToken cancellationToken)
         {
             Task task = Task.CompletedTask;
 
             if (_options.TcpProbe != null)
             {
-                ITcpProbeService service = _healthCheckService.GetProbeService<ITcpProbeService>();
+                ITcpMonitor service = _healthCheckService.GetMonitorService<ITcpMonitor>();
                 task = service.Monitor(_options.TcpProbe, _options.Logging, cancellationToken);
             }
 

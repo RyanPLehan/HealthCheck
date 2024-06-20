@@ -32,15 +32,15 @@ namespace HealthCheck.Services
     ///     1.  If the request is not a HTTP GET method, then a 405 Method Not Allowed is returned
     ///     2.  If an endpoint is not matched, then a 404 Not Found is returned
     /// </remarks>
-    internal sealed class HttpsProbeService : HttpService, IHttpsProbeService
+    internal sealed class HttpsMonitor : HttpMonitorBase, IHttpsMonitor
     {
         private const string CERTIFICATE_ISSUER = "TQL";
         private HttpProbeOptions? _httpProbeOptions;
         private ProbeLoggingOptions? _probeLoggingOptions;
         private X509Certificate2? _serverCertificate;
 
-        public HttpsProbeService(ILogger<HttpsProbeService> logger,
-                                 IHealthCheckService healthCheckService)
+        public HttpsMonitor(ILogger<HttpsMonitor> logger,
+                            IHealthCheckService healthCheckService)
             : base(logger, healthCheckService)
         {
         }

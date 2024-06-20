@@ -11,7 +11,7 @@ namespace HealthCheck
         Task<HealthReport> CheckReadiness(CancellationToken cancellationToken);
         Task<HealthReport> CheckLiveness(CancellationToken cancellationToken);
 
-        internal T GetProbeService<T>();
+        internal T GetMonitorService<T>();
         internal Task<HealthReport> ExecuteCheckServices(HealthCheckType healthCheckType, CancellationToken cancellationToken);
     }
 }

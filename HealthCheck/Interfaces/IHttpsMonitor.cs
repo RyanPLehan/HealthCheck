@@ -4,7 +4,7 @@ using HealthCheck.Configuration;
 
 namespace HealthCheck
 {
-    internal interface IHttpsProbeService
+    internal interface IHttpsMonitor
     {
         Task Monitor(HttpProbeOptions probeOptions, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken);
     }

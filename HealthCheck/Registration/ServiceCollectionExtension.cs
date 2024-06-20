@@ -19,10 +19,6 @@ namespace HealthCheck.Registration
                             .AddCheckReadiness<ReadinessCheck>("Default Readiness Check")
                             .AddCheckLiveness<LivenessCheck>("Default Liveness Check");
 
-            services.AddMemoryCache();
-            services.TryAddSingleton<IHealthCheckService, HealthCheckService>();
-            services.AddHostedService<HealthCheckServer>();
-
             return builder;
         }
 
@@ -34,8 +30,7 @@ namespace HealthCheck.Registration
         /// <returns></returns>
         public static IServiceCollection UseHttpMonitor(this IServiceCollection services)
         {
-            services.TryAddSingleton<IHealthCheckService, HealthCheckService>();
-            services.TryAddSingleton<IHttpProbeService, HttpProbeService>();
+            services.TryAddSingleton<IHttpMonitor, HttpMonitor>();
             return services;
         }
 
@@ -47,8 +42,7 @@ namespace HealthCheck.Registration
         /// <returns></returns>
         public static IServiceCollection UseHttpsMonitor(this IServiceCollection services)
         {
-            services.TryAddSingleton<IHealthCheckService, HealthCheckService>();
-            services.TryAddSingleton<IHttpsProbeService, HttpsProbeService>();
+            services.TryAddSingleton<IHttpsMonitor, HttpsMonitor>();
             return services;
         }
 
@@ -63,8 +57,7 @@ namespace HealthCheck.Registration
         /// <returns></returns>
         public static IServiceCollection UseTcpMonitor(this IServiceCollection services)
         {
-            services.TryAddSingleton<IHealthCheckService, HealthCheckService>();
-            services.TryAddSingleton<ITcpProbeService, TcpProbeService>();
+            services.TryAddSingleton<ITcpMonitor, TcpMonitor>();
             return services;
         }
 

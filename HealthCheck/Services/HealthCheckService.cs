@@ -51,7 +51,7 @@ namespace HealthCheck.Services
 
 
 
-        public T GetProbeService<T>()
+        public T GetMonitorService<T>()
         {
             return (T)_serviceProvider.GetRequiredService(typeof(T));
         }
