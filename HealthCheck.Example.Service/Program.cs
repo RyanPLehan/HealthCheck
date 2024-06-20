@@ -35,6 +35,10 @@ namespace HealthCheck.Example.Service
                     .AddCheckStatus<ApiCheck>("Internal API Check")
                     .AddCheckStatus<ServerPingCheck>("File Server Ping Check");
 
+            services.UseHttpMonitor();
+            services.UseHttpsMonitor();
+            services.UseTcpMonitor();
+
             return services;
         }
 

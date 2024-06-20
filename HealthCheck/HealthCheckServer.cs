@@ -6,14 +6,14 @@ using Microsoft.Extensions.Options;
 
 namespace HealthCheck
 {
-    public class HealthCheckWorker : BackgroundService
+    public class HealthCheckServer : BackgroundService
     {
-        private readonly ILogger<HealthCheckWorker> _logger;
+        private readonly ILogger<HealthCheckServer> _logger;
         private readonly IHealthCheckService _healthCheckService;
         private readonly HealthCheckOptions _options;
 
 
-        public HealthCheckWorker(ILogger<HealthCheckWorker> logger,
+        public HealthCheckServer(ILogger<HealthCheckServer> logger,
                                  IHealthCheckService healthCheckService,
                                  IConfiguration configuration)
         {
@@ -28,7 +28,7 @@ namespace HealthCheck
         }
 
 
-        public HealthCheckWorker(ILogger<HealthCheckWorker> logger,
+        public HealthCheckServer(ILogger<HealthCheckServer> logger,
                                  IHealthCheckService healthCheckService,
                                  HealthCheckOptions options)
         {
