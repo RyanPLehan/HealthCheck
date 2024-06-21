@@ -90,7 +90,7 @@ namespace HealthCheck.Services
                 if (healthReport.Status != HealthStatus.UnHealthy)
                     await Task.Delay(intervalTimeInMS);
 
-            } while (!cancellationToken.IsCancellationRequested && healthReport.Status != HealthStatus.Healthy);
+            } while (!cancellationToken.IsCancellationRequested && healthReport.Status == HealthStatus.UnHealthy);
 
             return healthReport;
         }
