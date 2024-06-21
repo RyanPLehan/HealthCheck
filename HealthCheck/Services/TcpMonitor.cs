@@ -87,7 +87,7 @@ namespace HealthCheck.Services
                 healthReport = await _healthCheckService.ExecuteCheckServices(healthCheckType, cancellationToken);
                 LoggingService.LogHealthCheck(_logger, loggingOptions, healthReport);
 
-                if (healthReport.Status != HealthStatus.UnHealthy)
+                if (healthReport.Status == HealthStatus.UnHealthy)
                     await Task.Delay(intervalTimeInMS);
 
             } while (!cancellationToken.IsCancellationRequested && healthReport.Status == HealthStatus.UnHealthy);
