@@ -20,13 +20,7 @@ namespace HealthCheck.Registration
         /// </remarks>
         public static IHostBuilder UseHealthCheckMonitor(this IHostBuilder builder)
         {
-            builder.ConfigureServices(services =>
-            {
-                services.AddMemoryCache();
-                services.TryAddSingleton<IHealthCheckService, HealthCheckService>();
-                services.AddHostedService<HealthCheckMonitor>();
-            });
-
+            builder.ConfigureServices(ConfigureServices);
             return builder;
         }
 
@@ -41,11 +35,22 @@ namespace HealthCheck.Registration
         /// </remarks>
         public static IHostApplicationBuilder UseHealthCheckMonitor(this IHostApplicationBuilder builder)
         {
-            builder.Services.AddMemoryCache();
-            builder.Services.TryAddSingleton<IHealthCheckService, HealthCheckService>();
-            builder.Services.AddHostedService<HealthCheckMonitor>();
-
+            ConfigureServices(builder.Services);
             return builder;
+        }
+
+
+        private static void ConfigureServices(IServiceCollection services)
+        {
+            services.AddMemoryCache();
+            services.TryAddSingleton<IHealthCheckService, HealthCheckService>();
+
+            services.TryAddSingleton<IHttpMonitor, HttpMonitor>();
+            services.TryAddSingleton<IHttpsMonitor, HttpsMonitor>();
+            services.TryAddSingleton<ITcpMonitor, TcpMonitor>();
+
+            services.AddHostedService<HealthCheckMonitor>();
+
         }
     }
 }

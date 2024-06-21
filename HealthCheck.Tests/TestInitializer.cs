@@ -70,10 +70,6 @@ namespace HealthCheck.Tests
 
         private static IServiceCollection ConfigureServices(IServiceCollection services)
         {
-            // Specify the monitoring services
-            services.UseHttpMonitor();
-            services.UseHttpsMonitor();
-            services.UseTcpMonitor();
             services.AddHealthChecks();     // Auto adds default checks
             return services;
         }

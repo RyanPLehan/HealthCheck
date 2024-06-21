@@ -27,11 +27,6 @@ namespace HealthCheck.Example.Service
 
         private static IServiceCollection ConfigureServices(IServiceCollection services)
         {
-            // Specify the monitoring services
-            services.UseHttpMonitor();
-            services.UseHttpsMonitor();
-            services.UseTcpMonitor();
-
             // Specify Custom Health Checks
             services.AddHealthChecks()     // Auto adds default checks
                     .AddCheckStartup<SystemCheck>("Preflight System Check")

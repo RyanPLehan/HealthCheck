@@ -22,45 +22,6 @@ namespace HealthCheck.Registration
             return builder;
         }
 
-        /// <summary>
-        /// Use the HTTP Monitor to respond to requests for Startup, Readiness and Liveness Health Check Probes
-        /// </summary>
-        /// <param name="services"></param>
-        /// <param name="port"></param>
-        /// <returns></returns>
-        public static IServiceCollection UseHttpMonitor(this IServiceCollection services)
-        {
-            services.TryAddSingleton<IHttpMonitor, HttpMonitor>();
-            return services;
-        }
-
-        /// <summary>
-        /// Use the HTTPS Monitor to respond to requests for Startup, Readiness and Liveness Health Check Probes
-        /// </summary>
-        /// <param name="services"></param>
-        /// <param name="port"></param>
-        /// <returns></returns>
-        public static IServiceCollection UseHttpsMonitor(this IServiceCollection services)
-        {
-            services.TryAddSingleton<IHttpsMonitor, HttpsMonitor>();
-            return services;
-        }
-
-
-        /// <summary>
-        /// Use the TCP Monitor to listen for Startup, Readiness and Liveness Health Check Probes
-        /// </summary>
-        /// <param name="services"></param>
-        /// <param name="startupPort">TCP Port number for Startup Probe.  Set to null to not monitor for Startup probe.</param>
-        /// <param name="readinessPort">TCP Port number for Readiness Probe.  Set to null to not monitor for Readiness probe.</param>
-        /// <param name="livenessPort">TCP Port number for Liveness Probe.  Set to null to not monitor for Liveness probe.</param>
-        /// <returns></returns>
-        public static IServiceCollection UseTcpMonitor(this IServiceCollection services)
-        {
-            services.TryAddSingleton<ITcpMonitor, TcpMonitor>();
-            return services;
-        }
-
 
         /*
         /// <summary>
