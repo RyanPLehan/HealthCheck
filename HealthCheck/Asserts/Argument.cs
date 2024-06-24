@@ -12,6 +12,22 @@ namespace HealthCheck.Asserts
     /// </summary>
     internal static partial class Argument
     {
+        #region Health Check Specific Asserts
+        public static void AssertNotValidInterval(int seconds)
+        {
+            const int MAX_SECONDS = 60;
+            if (seconds < 0 || seconds > MAX_SECONDS)
+                throw new Exception("Interval value must be between 1 and 30 seconds");
+        }
+
+        public static void AssertNotValidPort(int port)
+        {
+            if (port < 0 || port > 65535)
+                throw new Exception("Port number must be between 0 and 65535");
+        }
+        #endregion
+
+        #region General Asserts
         /// <summary>
         ///   Ensures that an argument's value is a string comprised of only whitespace, though
         ///   <c>null</c> is considered a valid value.  An <see cref="ArgumentException" /> is thrown
@@ -181,5 +197,6 @@ namespace HealthCheck.Asserts
                 throw new ObjectDisposedException(name, $"{name} has already been closed and cannot perform the requested operation.");
             }
         }
+        #endregion
     }
 }

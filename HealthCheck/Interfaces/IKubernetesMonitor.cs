@@ -6,6 +6,6 @@ namespace HealthCheck
 {
     internal interface IKubernetesMonitor
     {
-        Task Monitor(TcpProbeOptions probeOptions, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken);
+        Task Monitor(TcpProbeOptions probeOptions, ProbeLogOptions loggingOptions, CancellationToken cancellationToken);
     }
 }

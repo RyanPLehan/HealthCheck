@@ -85,28 +85,28 @@ namespace HealthCheck
 
         private void ValidateOptions()
         {
-            Asserts.HealthCheckOptionsAssert.AssertNoProbesConfigured(this._options);
-            Asserts.HealthCheckOptionsAssert.AssertNotSamePort(_options.HttpProbe?.Port, _options.HttpProbe?.SslPort);
-            Asserts.HealthCheckOptionsAssert.AssertNotSamePort(_options.HttpProbe?.Port, _options.TcpProbe);
-            Asserts.HealthCheckOptionsAssert.AssertNotSamePort(_options.HttpProbe?.SslPort, _options.TcpProbe);
+            Asserts.HealthCheck.AssertNoProbesConfigured(this._options);
+            Asserts.HealthCheck.AssertNotSamePort(_options.HttpProbe?.Port, _options.HttpProbe?.SslPort);
+            Asserts.HealthCheck.AssertNotSamePort(_options.HttpProbe?.Port, _options.TcpProbe);
+            Asserts.HealthCheck.AssertNotSamePort(_options.HttpProbe?.SslPort, _options.TcpProbe);
 
             if (_options.HttpProbe?.Port != null)
-                Asserts.HealthCheckOptionsAssert.AssertNotValidPort(_options.HttpProbe.Port.Value);
+                Asserts.HealthCheck.AssertNotValidPort(_options.HttpProbe.Port.Value);
 
             if (_options.HttpProbe?.SslPort != null)
-                Asserts.HealthCheckOptionsAssert.AssertNotValidPort(_options.HttpProbe.SslPort.Value);
+                Asserts.HealthCheck.AssertNotValidPort(_options.HttpProbe.SslPort.Value);
 
             if (_options.TcpProbe != null)
-                Asserts.HealthCheckOptionsAssert.AssertNotValidInterval(_options.TcpProbe.CheckRetryIntervalInSeconds);
+                Asserts.HealthCheck.AssertNotValidInterval(_options.TcpProbe.CheckRetryIntervalInSeconds);
             
             if (_options.TcpProbe?.Ports.Startup != null)
-                Asserts.HealthCheckOptionsAssert.AssertNotValidPort(_options.TcpProbe.Ports.Startup.Value);
+                Asserts.HealthCheck.AssertNotValidPort(_options.TcpProbe.Ports.Startup.Value);
 
             if (_options.TcpProbe?.Ports.Readiness != null)
-                Asserts.HealthCheckOptionsAssert.AssertNotValidPort(_options.TcpProbe.Ports.Readiness.Value);
+                Asserts.HealthCheck.AssertNotValidPort(_options.TcpProbe.Ports.Readiness.Value);
 
             if (_options.TcpProbe?.Ports.Liveness != null)
-                Asserts.HealthCheckOptionsAssert.AssertNotValidPort(_options.TcpProbe.Ports.Liveness.Value);
+                Asserts.HealthCheck.AssertNotValidPort(_options.TcpProbe.Ports.Liveness.Value);
         }
 
 

@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Threading.Tasks;
 using System.Text;
 using HealthCheck.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace HealthCheck.Services
 {
@@ -26,51 +27,29 @@ namespace HealthCheck.Services
     ///     1.  If the request is not a HTTP GET method, then a 405 Method Not Allowed is returned
     ///     2.  If an endpoint is not matched, then a 404 Not Found is returned
     /// </remarks>
-    internal sealed class HttpMonitor : HttpMonitorBase,  IHttpMonitor
+    internal sealed class HttpMonitor : HttpMonitorBase
     {
-        private HttpProbeOptions? _httpProbeOptions;
-        private ProbeLoggingOptions? _probeLoggingOptions;
+        private readonly HttpMonitorOptions _monitorOptions;
 
         public HttpMonitor(ILogger<HttpMonitor> logger,
-                                IHealthCheckService healthCheckService)
-            : base(logger, healthCheckService)
+                           IHealthCheckService healthCheckService,
+                           IOptions<ProbeLogOptions> probeLogOptions,
+                           IOptions<HttpMonitorOptions> monitorOptions)
+            : base(logger, healthCheckService, probeLogOptions)
         {
-        }
-
-        public async Task Monitor(HttpProbeOptions probeOptions, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
-        {
-            _httpProbeOptions = probeOptions;
-            _probeLoggingOptions = loggingOptions;
-
-            // Yield so that caller can continue processing
-            await Task.Yield();
-
-            try
-            {
-                await Execute(probeOptions.Endpoints, loggingOptions, cancellationToken);
-            }
-
-            // This would occur by cancellationToken if sub methods would use the ThrowIfCancelled
-            catch (OperationCanceledException ex)
-            {
-                this.Logger.LogError(ex, "Http Probe Service shutting down by request");
-            }
-
-
-            // Any other exception
-            catch (Exception ex)
-            {
-                this.Logger.LogError(ex, "Http Probe Service encountered an error and is shutting down");
-            }
-
-            await Task.CompletedTask;
+            ArgumentNullException.ThrowIfNull(monitorOptions?.Value, nameof(monitorOptions));
+            _monitorOptions = monitorOptions.Value;
         }
 
 
+        /// <summary>
+        /// Create TCP Listener
+        /// </summary>
+        /// <returns></returns>
         protected override TcpListener CreateTcpListener()
         {
-            ArgumentNullException.ThrowIfNull(_httpProbeOptions?.Port, "Port");
-            return new TcpListener(IPAddress.Any, _httpProbeOptions.Port.Value);
+            Asserts.Argument.AssertNotValidPort(_monitorOptions.Port);
+            return new TcpListener(IPAddress.Any, _monitorOptions.Port);
         }
     }
 }

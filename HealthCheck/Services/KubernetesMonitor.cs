@@ -41,7 +41,7 @@ namespace HealthCheck.Services
             _healthCheckService = healthCheckService;
         }
 
-        public async Task Monitor(TcpProbeOptions probeOptions, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
+        public async Task Monitor(TcpProbeOptions probeOptions, ProbeLogOptions loggingOptions, CancellationToken cancellationToken)
         {
             // Yield so that caller can continue processing
             await Task.Yield();
@@ -76,7 +76,7 @@ namespace HealthCheck.Services
         }
 
 
-        private async Task<HealthReport> ExecuteIntervalCheck(byte intervalInSeconds, HealthCheckType healthCheckType, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
+        private async Task<HealthReport> ExecuteIntervalCheck(byte intervalInSeconds, HealthCheckType healthCheckType, ProbeLogOptions loggingOptions, CancellationToken cancellationToken)
         {
             int intervalTimeInMS = intervalInSeconds * 1000;        // Convert from seconds to milliseconds
             HealthReport healthReport;
@@ -96,7 +96,7 @@ namespace HealthCheck.Services
         }
 
 
-        private async Task MonitorPort(int port, HealthCheckType healthCheckType, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
+        private async Task MonitorPort(int port, HealthCheckType healthCheckType, ProbeLogOptions loggingOptions, CancellationToken cancellationToken)
         {
             try
             {

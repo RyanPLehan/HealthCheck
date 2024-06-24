@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using System.Text;
 using HealthCheck.Configuration;
 using HealthCheck.Formatters;
+using Microsoft.Extensions.Options;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace HealthCheck.Services
 {
@@ -32,56 +34,49 @@ namespace HealthCheck.Services
     ///     1.  If the request is not a HTTP GET method, then a 405 Method Not Allowed is returned
     ///     2.  If an endpoint is not matched, then a 404 Not Found is returned
     /// </remarks>
-    internal sealed class HttpsMonitor : HttpMonitorBase, IHttpsMonitor
+    internal sealed class HttpsMonitor : HttpMonitorBase
     {
-        private const string CERTIFICATE_ISSUER = "TQL";
-        private HttpProbeOptions? _httpProbeOptions;
-        private ProbeLoggingOptions? _probeLoggingOptions;
+        private readonly HttpsMonitorOptions _monitorOptions;
         private X509Certificate2? _serverCertificate;
 
         public HttpsMonitor(ILogger<HttpsMonitor> logger,
-                                 IHealthCheckService healthCheckService)
-            : base(logger, healthCheckService)
+                            IHealthCheckService healthCheckService,
+                            IOptions<ProbeLogOptions> probeLogOptions,
+                            IOptions<HttpsMonitorOptions> monitorOptions)
+            : base(logger, healthCheckService, probeLogOptions)
         {
+            _monitorOptions = monitorOptions?.Value ??
+                throw new ArgumentNullException(nameof(monitorOptions));
         }
 
-        public async Task Monitor(HttpProbeOptions probeOptions, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken)
+        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            _httpProbeOptions = probeOptions;
-            _probeLoggingOptions = loggingOptions;
+            if (String.IsNullOrWhiteSpace(_monitorOptions.CertificateIssuer))
+                _serverCertificate = GetServerCertificate(StoreName.Root);
+            else
+                _serverCertificate = GetServerCertificate(StoreName.Root, _monitorOptions.CertificateIssuer);
 
-            // Yield so that caller can continue processing
-            await Task.Yield();
 
-            try
+            if (_serverCertificate != null)
             {
-                _serverCertificate = GetServerCertificate(StoreName.Root, CERTIFICATE_ISSUER) ??
-                    throw new Exception($"Unable to acquire X509 Certificate issued by {CERTIFICATE_ISSUER}");
-
-                await Execute(probeOptions.Endpoints, loggingOptions, cancellationToken);
+                await base.ExecuteAsync(cancellationToken);
             }
-
-            // This would occur by cancellationToken if sub methods would use the ThrowIfCancelled
-            catch (OperationCanceledException ex)
+            else
             {
-                this.Logger.LogError(ex, "Https Probe Service shutting down by request");
+                Logger.LogError("Unable to acquire X509 Certificate");
+                await StopAsync(cancellationToken);
             }
-
-            // Any other exception
-            catch (Exception ex)
-            {
-                this.Logger.LogError(ex, "Https Probe Service encountered an error and is shutting down");
-            }
-
-
-            await Task.CompletedTask;
         }
 
 
+        /// <summary>
+        /// Create TCP Listener
+        /// </summary>
+        /// <returns></returns>
         protected override TcpListener CreateTcpListener()
         {
-            ArgumentNullException.ThrowIfNull(_httpProbeOptions?.SslPort, "SslPort");
-            return new TcpListener(IPAddress.Any, _httpProbeOptions.SslPort.Value);
+            Asserts.Argument.AssertNotValidPort(_monitorOptions.Port);
+            return new TcpListener(IPAddress.Any, _monitorOptions.Port);
         }
 
 
@@ -102,6 +97,28 @@ namespace HealthCheck.Services
         }
 
 
+        /// <summary>
+        /// Get first valid certificate from this server from any cert store or location
+        /// </summary>
+        /// <returns></returns>
+        private X509Certificate2? GetServerCertificate()
+        {
+            X509Certificate2? x509Certificate = null;
+            StoreName[] storeNames = (StoreName[])Enum.GetValues(typeof(StoreName));
+
+            foreach (StoreName storeName in storeNames)
+            {
+                x509Certificate = GetServerCertificate(storeName);
+
+                // If set, then break out of loop
+                if (x509Certificate != null)
+                    break;
+            }
+
+            return x509Certificate;
+        }
+
+
         private X509Certificate2? GetServerCertificate(StoreName storeName, string issuer)
         {
             X509Certificate2? x509Certificate = null;
@@ -118,11 +135,9 @@ namespace HealthCheck.Services
                     var certsByIssuer = store.Certificates
                                              .Find(X509FindType.FindByIssuerName, issuer, true);
 
-                    // Get cert where the expiration date is at least 1 day from current date
-                    x509Certificate = store.Certificates
-                                           .Find(X509FindType.FindByTimeValid, DateTime.Now.AddDays(1), true)
-                                           .First();
-                    break;
+                    x509Certificate = GetServerCertificate(certsByIssuer);
+                    if (x509Certificate != null)
+                        break;
                 }
 
                 // Certificate Store cannot be openned
@@ -138,54 +153,67 @@ namespace HealthCheck.Services
         }
 
 
-
-        /// <summary>
-        /// Get first valid certificate from this server from any cert store or location
-        /// </summary>
-        /// <returns></returns>
-        private X509Certificate2? GetServerCertificate()
+        private X509Certificate2? GetServerCertificate(StoreName storeName)
         {
             X509Certificate2? x509Certificate = null;
             StoreLocation[] storeLocations = (StoreLocation[])Enum.GetValues(typeof(StoreLocation));
-            StoreName[] storeNames = (StoreName[])Enum.GetValues(typeof(StoreName));
 
+            // Iterate through store locations (ie current user and local machine)
             foreach (StoreLocation storeLocation in storeLocations)
             {
-                // If set, then break out of loop
-                if (x509Certificate != null)
-                    break;
+                X509Store store = new X509Store(storeName, storeLocation);
 
-                foreach (StoreName storeName in storeNames)
+                try
                 {
-                    X509Store store = new X509Store(storeName, storeLocation);
-
-                    try
-                    {
-                        store.Open(OpenFlags.OpenExistingOnly);
-                        var certificates = store.Certificates
-                                                .Find(X509FindType.FindByTimeValid, DateTime.Now.AddDays(1), true);
-                        if (certificates.Any())
-                        {
-                            // Get any valid x509 Certificate that can be used.
-                            x509Certificate = certificates.First();
-                            break;
-                        }
-                    }
-
-                    // Store cannot be openned
-                    catch (CryptographicException)
-                    { }
-
-                    // Caller does not have the required permission
-                    catch (SecurityException)
-                    { }
-
-                    catch (Exception)
-                    { }
+                    store.Open(OpenFlags.OpenExistingOnly);
+                    x509Certificate = GetServerCertificate(store.Certificates);
+                    if (x509Certificate != null)
+                        break;
                 }
+
+                // Certificate Store cannot be openned
+                catch (CryptographicException)
+                { }
+
+                // Caller does not have the required permission for Certificate
+                catch (SecurityException)
+                { }
             }
 
             return x509Certificate;
+        }
+
+        private X509Certificate2? GetServerCertificate(X509Certificate2Collection certificates)
+        {
+            return certificates.OfType<X509Certificate2>()
+                                          .Where(IsCertificateAllowedForServerAuthentication)
+                                          .Where(cert => cert.HasPrivateKey)
+                                          .OrderByDescending(cert => cert.NotAfter)
+                                          .FirstOrDefault();
+        }
+
+        private bool IsCertificateAllowedForServerAuthentication(X509Certificate2 certificate)
+        {
+            // See http://oid-info.com/get/1.3.6.1.5.5.7.3.1
+            // Indicates that a certificate can be used as a SSL server certificate
+            const string SERVER_AUTHENTICATION_OID = "1.3.6.1.5.5.7.3.1";
+
+            var hasEkuExtension = false;
+
+            foreach (var extension in certificate.Extensions.OfType<X509EnhancedKeyUsageExtension>())
+            {
+                hasEkuExtension = true;
+                foreach (var oid in extension.EnhancedKeyUsages)
+                {
+                    if (string.Equals(oid.Value, SERVER_AUTHENTICATION_OID, StringComparison.Ordinal))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return !hasEkuExtension;
+
         }
     }
 }
