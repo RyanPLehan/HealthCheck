@@ -4,7 +4,7 @@ using HealthCheck.Configuration;
 
 namespace HealthCheck
 {
-    internal interface ITcpMonitor
+    internal interface IKubernetesMonitor
     {
         Task Monitor(TcpProbeOptions probeOptions, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken);
     }

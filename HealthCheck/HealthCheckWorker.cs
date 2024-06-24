@@ -142,7 +142,7 @@ namespace HealthCheck
 
             if (_options.TcpProbe != null)
             {
-                ITcpMonitor service = _healthCheckService.GetProbeService<ITcpMonitor>();
+                IKubernetesMonitor service = _healthCheckService.GetProbeService<IKubernetesMonitor>();
                 task = service.Monitor(_options.TcpProbe, _options.Logging, cancellationToken);
             }
 

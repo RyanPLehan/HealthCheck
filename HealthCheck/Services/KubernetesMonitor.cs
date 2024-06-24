@@ -25,13 +25,13 @@ namespace HealthCheck.Services
     /// Then the monitor will not respond to the Readiness probe until the Startup Probe has occurred.
     /// The same applies to Liveness, in that, the monitor will not respond to the Liveness probe until the Readiness probe has occurred
     /// </remarks>
-    internal class TcpMonitor : ITcpMonitor
+    internal class KubernetesMonitor : IKubernetesMonitor
     {
-        private readonly ILogger<TcpMonitor> _logger;
+        private readonly ILogger<KubernetesMonitor> _logger;
         private readonly IHealthCheckService _healthCheckService;
 
 
-        public TcpMonitor(ILogger<TcpMonitor> logger,
+        public KubernetesMonitor(ILogger<KubernetesMonitor> logger,
                                IHealthCheckService healthCheckService)
         {
             ArgumentNullException.ThrowIfNull(logger, nameof(logger));

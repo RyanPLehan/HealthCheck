@@ -23,7 +23,7 @@ namespace HealthCheck.Registration
             services.TryAddSingleton<IHealthCheckService, HealthCheckService>();
             services.TryAddSingleton<IHttpMonitor, HttpMonitor>();
             services.TryAddSingleton<IHttpsMonitor, HttpsMonitor>();
-            services.TryAddSingleton<ITcpMonitor, TcpMonitor>();
+            services.TryAddSingleton<IKubernetesMonitor, KubernetesMonitor>();
             services.AddHostedService<HealthCheckWorker>();
 
             return builder;
