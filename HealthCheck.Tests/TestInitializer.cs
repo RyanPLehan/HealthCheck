@@ -26,7 +26,7 @@ namespace HealthCheck.Tests
             var builder = Host.CreateApplicationBuilder();
 
             // Setup Health Check Monitor
-            builder.UseHealthCheckMonitor();
+            builder.UseHealthCheckServer();
 
             ConfigureOptions(builder.Configuration, builder.Services);
             ConfigureServices(builder.Services);

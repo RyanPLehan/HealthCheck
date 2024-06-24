@@ -18,7 +18,7 @@ namespace HealthCheck.Registration
         /// <remarks>
         /// Kept for backwards compatiblity for apps using IHostBuilder that use callbacks
         /// </remarks>
-        public static IHostBuilder UseHealthCheckMonitor(this IHostBuilder builder)
+        public static IHostBuilder UseHealthCheckServer(this IHostBuilder builder)
         {
             builder.ConfigureServices(ConfigureServices);
             return builder;
@@ -33,7 +33,7 @@ namespace HealthCheck.Registration
         /// <remarks>
         /// Update for more modern approach that uses more linear coding style
         /// </remarks>
-        public static IHostApplicationBuilder UseHealthCheckMonitor(this IHostApplicationBuilder builder)
+        public static IHostApplicationBuilder UseHealthCheckServer(this IHostApplicationBuilder builder)
         {
             ConfigureServices(builder.Services);
             return builder;
@@ -49,7 +49,7 @@ namespace HealthCheck.Registration
             services.TryAddSingleton<IHttpsMonitor, HttpsMonitor>();
             services.TryAddSingleton<ITcpMonitor, TcpMonitor>();
 
-            services.AddHostedService<HealthCheckMonitor>();
+            services.AddHostedService<HealthCheckServer>();
 
         }
     }

@@ -10,7 +10,7 @@ namespace HealthCheck.Example.Service
             var builder = Host.CreateApplicationBuilder(args);
 
             // Setup Health Check Monitor
-            builder.UseHealthCheckMonitor();
+            builder.UseHealthCheckServer();
 
             ConfigureOptions(builder.Configuration, builder.Services);
             ConfigureServices(builder.Services);

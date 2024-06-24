@@ -6,16 +6,16 @@ using Microsoft.Extensions.Options;
 
 namespace HealthCheck
 {
-    internal class HealthCheckMonitor : BackgroundService
+    internal class HealthCheckServer : BackgroundService
     {
-        private readonly ILogger<HealthCheckMonitor> _logger;
+        private readonly ILogger<HealthCheckServer> _logger;
         private readonly IHealthCheckService _healthCheckService;
         private readonly HealthCheckOptions _options;
 
 
-        public HealthCheckMonitor(ILogger<HealthCheckMonitor> logger,
-                                  IHealthCheckService healthCheckService,
-                                  IConfiguration configuration)
+        public HealthCheckServer(ILogger<HealthCheckServer> logger,
+                                 IHealthCheckService healthCheckService,
+                                 IConfiguration configuration)
         {
             ArgumentNullException.ThrowIfNull(logger, nameof(logger));
             ArgumentNullException.ThrowIfNull(healthCheckService, nameof(healthCheckService));
@@ -28,7 +28,7 @@ namespace HealthCheck
         }
 
 
-        public HealthCheckMonitor(ILogger<HealthCheckMonitor> logger,
+        public HealthCheckServer(ILogger<HealthCheckServer> logger,
                                  IHealthCheckService healthCheckService,
                                  HealthCheckOptions options)
         {

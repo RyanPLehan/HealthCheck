@@ -17,13 +17,13 @@ namespace HealthCheck.Services
 
         public static void LogHealthCheck(ILogger logger, ProbeLoggingOptions loggingOptions, HealthReport healthReport)
         {
-            if (loggingOptions.LogStatusWhenHealthy &&
+            if (loggingOptions.LogWhenHealthy &&
                 healthReport.Status == HealthStatus.Healthy)
             {
                 logger.LogInformation("Health Check Result: {0}", healthReport.Status.ToString());
             }
 
-            if (loggingOptions.LogStatusWhenNotHealthy &&
+            if (loggingOptions.LogWhenNotHealthy &&
                 healthReport.Status != HealthStatus.Healthy)
             {
                 logger.LogWarning("Health Check Result: {0}", healthReport.Status.ToString());

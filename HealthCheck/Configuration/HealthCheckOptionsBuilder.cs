@@ -62,8 +62,8 @@ namespace HealthCheck.Configuration
             _loggingOptions = new ProbeLoggingOptions()
             {
                 LogProbe = logProbe,
-                LogStatusWhenHealthy = logStatusWhenHealthy,
-                LogStatusWhenNotHealthy = logStatusWhenNotHealthy
+                LogWhenHealthy = logStatusWhenHealthy,
+                LogWhenNotHealthy = logStatusWhenNotHealthy
             };
         }
 
