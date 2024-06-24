@@ -3,7 +3,7 @@ using HealthCheck.Registration;
 using HealthCheck.Tests.Formatters;
 
 
-namespace HealthCheck.Tests.HttpProbe
+namespace HealthCheck.Tests.HttpMonitor
 {
     [TestClass]
     public class DefaultChecksTest

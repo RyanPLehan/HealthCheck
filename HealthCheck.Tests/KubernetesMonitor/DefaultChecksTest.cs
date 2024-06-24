@@ -1,13 +1,14 @@
 using HealthCheck.Registration;
-using HealthCheck.Tests.HttpProbe;
 using System.Net.Sockets;
 
 
-namespace HealthCheck.Tests.TcpProbe
+namespace HealthCheck.Tests.KubernetesMonitor
 {
     [TestClass]
     public class DefaultChecksTest 
     {
+        private const string _host = "localhost";
+
         [ClassInitialize]
         public static async Task ClassInitialize(TestContext testContext)
         { }
@@ -38,7 +39,7 @@ namespace HealthCheck.Tests.TcpProbe
                 // Act
                 using (TcpClient client = new TcpClient())
                 {
-                    await client.ConnectAsync(UrlBuilder.Host, port);
+                    await client.ConnectAsync(_host, port);
                 }
 
                 await Task.Delay(250);      // Simulate a delay

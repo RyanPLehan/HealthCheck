@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace HealthCheck.Tests.HttpProbe
+namespace HealthCheck.Tests.HttpMonitor
 {
     internal class HealthReport
     {
