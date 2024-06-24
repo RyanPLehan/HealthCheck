@@ -116,7 +116,7 @@ namespace HealthCheck
 
             if (_options.HttpProbe?.Port != null)
             {
-                IHttpProbeService service = _healthCheckService.GetProbeService<IHttpProbeService>();
+                IHttpMonitor service = _healthCheckService.GetProbeService<IHttpMonitor>();
                 task = service.Monitor(_options.HttpProbe, _options.Logging, cancellationToken);
             }
 
@@ -129,7 +129,7 @@ namespace HealthCheck
 
             if (_options.HttpProbe?.SslPort != null)
             {
-                IHttpsProbeService service = _healthCheckService.GetProbeService<IHttpsProbeService>();
+                IHttpsMonitor service = _healthCheckService.GetProbeService<IHttpsMonitor>();
                 task = service.Monitor(_options.HttpProbe, _options.Logging, cancellationToken);
             }
 
@@ -142,7 +142,7 @@ namespace HealthCheck
 
             if (_options.TcpProbe != null)
             {
-                ITcpProbeService service = _healthCheckService.GetProbeService<ITcpProbeService>();
+                ITcpMonitor service = _healthCheckService.GetProbeService<ITcpMonitor>();
                 task = service.Monitor(_options.TcpProbe, _options.Logging, cancellationToken);
             }
 

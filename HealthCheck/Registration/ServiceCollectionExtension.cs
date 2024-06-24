@@ -21,9 +21,9 @@ namespace HealthCheck.Registration
 
             services.AddMemoryCache();
             services.TryAddSingleton<IHealthCheckService, HealthCheckService>();
-            services.TryAddSingleton<IHttpProbeService, HttpProbeService>();
-            services.TryAddSingleton<IHttpsProbeService, HttpsProbeService>();
-            services.TryAddSingleton<ITcpProbeService, TcpProbeService>();
+            services.TryAddSingleton<IHttpMonitor, HttpMonitor>();
+            services.TryAddSingleton<IHttpsMonitor, HttpsMonitor>();
+            services.TryAddSingleton<ITcpMonitor, TcpMonitor>();
             services.AddHostedService<HealthCheckWorker>();
 
             return builder;

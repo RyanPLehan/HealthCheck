@@ -4,7 +4,7 @@ using HealthCheck.Configuration;
 
 namespace HealthCheck
 {
-    internal interface ITcpProbeService
+    internal interface ITcpMonitor
     {
         Task Monitor(TcpProbeOptions probeOptions, ProbeLoggingOptions loggingOptions, CancellationToken cancellationToken);
     }
