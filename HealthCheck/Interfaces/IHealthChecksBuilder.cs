@@ -4,20 +4,17 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace HealthCheck
 {
+    /// <summary>
+    /// Mimic closely to MS HealthCheckBuilder
+    /// <see cref="https://github.com/dotnet/aspnetcore/blob/main/src/HealthChecks/HealthChecks/src/DependencyInjection/HealthChecksBuilderAddCheckExtensions.cs"/>
+    /// </summary>
     public interface IHealthChecksBuilder
     {
         IServiceCollection Services { get; }
 
-        IHealthChecksBuilder AddCheckStatus<TService>(string name) where TService : class, IHealthCheck;
-        IHealthChecksBuilder AddCheckStatus(IHealthCheck instance, string name);
-
-        IHealthChecksBuilder AddCheckStartup<TService>(string name) where TService : class, IHealthCheck;
-        IHealthChecksBuilder AddCheckStartup(IHealthCheck instance, string name);
-
-        IHealthChecksBuilder AddCheckReadiness<TService>(string name) where TService : class, IHealthCheck;
-        IHealthChecksBuilder AddCheckReadiness(IHealthCheck instance, string name);
-
-        IHealthChecksBuilder AddCheckLiveness<TService>(string name) where TService : class, IHealthCheck;
-        IHealthChecksBuilder AddCheckLiveness(IHealthCheck instance, string name);
+        IHealthChecksBuilder AddCheck<TService>(string name) where TService : class, IHealthCheck;
+        IHealthChecksBuilder AddCheck<TService>(string name, IEnumerable<string> tags) where TService : class, IHealthCheck;
+        IHealthChecksBuilder AddCheck(IHealthCheck instance, string name);
+        IHealthChecksBuilder AddCheck(IHealthCheck instance, string name, IEnumerable<string> tags);
     }
 }

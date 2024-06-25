@@ -6,6 +6,10 @@ using HealthCheck.DefaultChecks;
 
 namespace HealthCheck.Registration
 {
+    /// <summary>
+    /// Mimic closely to MS HealthCheckBuilder
+    /// <see cref="https://github.com/dotnet/aspnetcore/blob/main/src/HealthChecks/HealthChecks/src/DependencyInjection/HealthChecksBuilderAddCheckExtensions.cs"/>
+    /// </summary>
     internal sealed class HealthChecksBuilder : IHealthChecksBuilder
     {
         private readonly IServiceCollection _services;
@@ -17,189 +21,79 @@ namespace HealthCheck.Registration
 
         public IServiceCollection Services => _services;
 
-        #region Check Liveness
+
         /// <summary>
-        /// Add Health Check for Liveness Probe
+        /// Add Health Check
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public IHealthChecksBuilder AddCheckLiveness<TService>(string name)
+        public IHealthChecksBuilder AddCheck<TService>(string name)
             where TService : class, IHealthCheck
         {
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
-            // If dev adds their own check status, remove default status check
-            RemoveService<LivenessCheck>(HealthCheckType.Liveness);
-            RemoveRegistration<LivenessCheck>(HealthCheckType.Liveness);
-
-            CreateRegistration(typeof(TService), HealthCheckType.Liveness, name);
-            _services.TryAddKeyedSingleton<IHealthCheck, TService>(HealthCheckType.Liveness);
+            CreateRegistration(typeof(TService), name);
+            _services.TryAddEnumerable(ServiceDescriptor.Singleton<IHealthCheck, TService>());
             return this;
         }
 
 
         /// <summary>
-        /// Add Health Check for Liveness Probe
-        /// </summary>
-        /// <param name="instance"></param>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public IHealthChecksBuilder AddCheckLiveness(IHealthCheck instance, string name)
-        {
-            ArgumentNullException.ThrowIfNull(instance, nameof(instance));
-            ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
-
-            // If dev adds their own check status, remove default status check
-            RemoveService<LivenessCheck>(HealthCheckType.Liveness);
-            RemoveRegistration<LivenessCheck>(HealthCheckType.Liveness);
-
-            CreateRegistration(instance.GetType(), HealthCheckType.Liveness, name);
-            _services.TryAddKeyedSingleton<IHealthCheck>(HealthCheckType.Liveness, instance);
-            return this;
-        }
-        #endregion
-
-
-        #region Check Readiness
-        /// <summary>
-        /// Add Health Check for Readiness Probe
+        /// Add Health Check
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public IHealthChecksBuilder AddCheckReadiness<TService>(string name)
+        public IHealthChecksBuilder AddCheck<TService>(string name, IEnumerable<string> tags)
             where TService : class, IHealthCheck
         {
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+            ArgumentNullException.ThrowIfNull(tags, nameof(tags));
 
-            // If dev adds their own check status, remove default status check
-            RemoveService<ReadinessCheck>(HealthCheckType.Readiness);
-            RemoveRegistration<ReadinessCheck>(HealthCheckType.Readiness);
-
-            CreateRegistration(typeof(TService), HealthCheckType.Readiness, name);
-            _services.TryAddKeyedSingleton<IHealthCheck, TService>(HealthCheckType.Readiness);
+            CreateRegistration(typeof(TService), name, tags);
+            _services.TryAddEnumerable(ServiceDescriptor.Singleton<IHealthCheck, TService>());
             return this;
         }
 
 
+
         /// <summary>
-        /// Add Health Check for Readiness Probe
+        /// Add Health Check
         /// </summary>
         /// <param name="instance"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public IHealthChecksBuilder AddCheckReadiness(IHealthCheck instance, string name)
+        public IHealthChecksBuilder AddCheck(IHealthCheck instance, string name)
         {
             ArgumentNullException.ThrowIfNull(instance, nameof(instance));
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
-            // If dev adds their own check status, remove default status check
-            RemoveService<ReadinessCheck>(HealthCheckType.Readiness);
-            RemoveRegistration<ReadinessCheck>(HealthCheckType.Readiness);
-
-            CreateRegistration(instance.GetType(), HealthCheckType.Readiness, name);
-            _services.TryAddKeyedSingleton<IHealthCheck>(HealthCheckType.Readiness, instance);
-            return this;
-        }
-        #endregion
-
-
-        #region Check Startup
-        /// <summary>
-        /// Add Health Check for Startup Probe
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public IHealthChecksBuilder AddCheckStartup<TService>(string name)
-            where TService : class, IHealthCheck
-        {
-            ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
-
-            // If dev adds their own check status, remove default status check
-            RemoveService<StartupCheck>(HealthCheckType.Startup);
-            RemoveRegistration<StartupCheck>(HealthCheckType.Startup);
-
-            CreateRegistration(typeof(TService), HealthCheckType.Startup, name);
-            _services.TryAddKeyedSingleton<IHealthCheck, TService>(HealthCheckType.Startup);
+            CreateRegistration(instance.GetType(), name);
+            _services.TryAddEnumerable(ServiceDescriptor.Singleton<IHealthCheck>(instance));
             return this;
         }
 
-
-        /// <summary>
-        /// Add Health Check for Startup Probe
-        /// </summary>
-        /// <param name="instance"></param>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public IHealthChecksBuilder AddCheckStartup(IHealthCheck instance, string name)
+        public IHealthChecksBuilder AddCheck(IHealthCheck instance, string name, IEnumerable<string> tags)
         {
             ArgumentNullException.ThrowIfNull(instance, nameof(instance));
             ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+            ArgumentNullException.ThrowIfNull(tags, nameof(tags));
 
-            // If dev adds their own check status, remove default status check
-            RemoveService<StartupCheck>(HealthCheckType.Startup);
-            RemoveRegistration<StartupCheck>(HealthCheckType.Startup);
-
-            CreateRegistration(instance.GetType(), HealthCheckType.Startup, name);
-            _services.TryAddKeyedSingleton<IHealthCheck>(HealthCheckType.Startup, instance);
-            return this;
-        }
-        #endregion
-
-
-        #region Check Status
-        /// <summary>
-        /// Add Health Check for Status Probe
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public IHealthChecksBuilder AddCheckStatus<TService>(string name)
-            where TService : class, IHealthCheck
-        {
-            ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
-
-            // If dev adds their own check status, remove default status check
-            // Only because the default status check returns Unhealthy
-            RemoveService<StatusCheck>(HealthCheckType.Status);
-            RemoveRegistration<StatusCheck>(HealthCheckType.Status);
-
-            CreateRegistration(typeof(TService), HealthCheckType.Status, name);
-            _services.TryAddKeyedSingleton<IHealthCheck, TService>(HealthCheckType.Status);
+            CreateRegistration(instance.GetType(), name, tags);
+            _services.TryAddEnumerable(ServiceDescriptor.Singleton<IHealthCheck>(instance));
             return this;
         }
 
 
-        /// <summary>
-        /// Add Health Check for Status Probe
-        /// </summary>
-        /// <param name="instance"></param>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public IHealthChecksBuilder AddCheckStatus(IHealthCheck instance, string name)
-        {
-            ArgumentNullException.ThrowIfNull(instance, nameof(instance));
-            ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
-            // If dev adds their own check status, remove default status check
-            // Only because the default status check returns Unhealthy
-            RemoveService<StatusCheck>(HealthCheckType.Status);
-            RemoveRegistration<StatusCheck>(HealthCheckType.Status);
-
-            CreateRegistration(instance.GetType(), HealthCheckType.Status, name);
-            _services.TryAddKeyedSingleton<IHealthCheck>(HealthCheckType.Status, instance);
-            return this;
-        }
-        #endregion
-
-        private HealthCheckRegistration CreateRegistration<T>(HealthCheckType healthCheckType, string name)
-            => CreateRegistration(typeof(T), healthCheckType, name);
+        private HealthCheckRegistration CreateRegistration<T>(string name)
+            => CreateRegistration(typeof(T), name);
 
 
-        private HealthCheckRegistration CreateRegistration(Type type, HealthCheckType healthCheckType, string name)
+        private HealthCheckRegistration CreateRegistration(Type type, string name)
         {
             HealthCheckRegistration registration = new HealthCheckRegistration()
             {
                 Type = type,
-                HealthCheckType = healthCheckType,
                 Name = name,
             };
 
@@ -208,29 +102,85 @@ namespace HealthCheck.Registration
             return registration;
         }
 
-        private void RemoveRegistration<T>(HealthCheckType healthCheckType)
-            => RemoveRegistration(typeof(T), healthCheckType);
 
-        private void RemoveRegistration(Type type, HealthCheckType healthCheckType)
+        private HealthCheckRegistration CreateRegistration<T>(string name, IEnumerable<string> tags)
+            => CreateRegistration(typeof(T), name, tags);
+
+
+        private HealthCheckRegistration CreateRegistration(Type type, string name, IEnumerable<string> tags)
         {
-            RegistrationRepository.Remove(type, healthCheckType);
+            HealthCheckRegistration registration = new HealthCheckRegistration()
+            {
+                Type = type,
+                Name = name,
+                Tags = tags,
+            };
+
+            RegistrationRepository.Add(registration);
+
+            return registration;
         }
 
-        private void RemoveService<T>(HealthCheckType healthCheckType)
-            => RemoveService(typeof(T), healthCheckType);
 
-        private void RemoveService(Type type, HealthCheckType healthCheckType)
+
+        private void RemoveRegistration<T>()
+            => RemoveRegistration(typeof(T));
+
+        private void RemoveRegistration(Type type)
+        {
+            RegistrationRepository.Remove(type);
+        }
+
+
+        /// <summary>
+        /// Remove Non-Keyed Service
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="key"></param>
+        private void RemoveService<T>()
+            => RemoveService(typeof(T));
+
+        /// <summary>
+        /// Remove Non-Keyed Service
+        /// </summary>
+        /// <param name="type"></param>
+        /// <exception cref="ReadOnlyException"></exception>
+        private void RemoveService(Type type)
         {
             if (_services.IsReadOnly)
                 throw new ReadOnlyException("ServiceCollection is read only");
 
-            // This works for non-keyed services
-            //var serviceDescriptor = _services.Where(x => x.ServiceType == type)
-            //                                 .FirstOrDefault();
+            var serviceDescriptor = _services.Where(x => x.ServiceType == type)
+                                             .FirstOrDefault();
+
+            if (serviceDescriptor != null)
+                _services.Remove(serviceDescriptor);
+        }
+
+
+        /// <summary>
+        /// Remove Keyed Service
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="key"></param>
+        private void RemoveService<T>(object key)
+            => RemoveService(typeof(T), key);
+
+
+        /// <summary>
+        /// Remove Keyed Service
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="key"></param>
+        /// <exception cref="ReadOnlyException"></exception>
+        private void RemoveService(Type type, object key)
+        {
+            if (_services.IsReadOnly)
+                throw new ReadOnlyException("ServiceCollection is read only");
 
             // This is for keyed services
             var serviceDescriptor = _services.Where(x => x.ServiceType == typeof(IHealthCheck) &&
-                                                         (HealthCheckType)x.ServiceKey == healthCheckType &&
+                                                         x.ServiceKey == key &&
                                                          x.KeyedImplementationType == type) 
                                              .FirstOrDefault();
 

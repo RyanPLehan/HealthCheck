@@ -1,11 +1,6 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using HealthCheck.Configuration;
-using HealthCheck.DefaultChecks;
-using HealthCheck.Services;
-using Microsoft.Extensions.Configuration;
-using System.Reflection.Metadata.Ecma335;
 
 namespace HealthCheck.Registration
 {
@@ -13,20 +8,7 @@ namespace HealthCheck.Registration
     {
         public static IHealthChecksBuilder AddHealthChecks(this IServiceCollection services)
         {
-            var builder = new HealthChecksBuilder(services)
-                            .AddCheckStatus<StatusCheck>("Default Status Check")
-                            .AddCheckStartup<StartupCheck>("Default Startup Check")
-                            .AddCheckReadiness<ReadinessCheck>("Default Readiness Check")
-                            .AddCheckLiveness<LivenessCheck>("Default Liveness Check");
-
-            services.AddMemoryCache();
-            services.TryAddSingleton<IHealthCheckService, HealthCheckService>();
-            services.TryAddSingleton<IHttpMonitor, HttpMonitor>();
-            services.TryAddSingleton<IHttpsMonitor, HttpsMonitor>();
-            services.TryAddSingleton<IKubernetesMonitor, KubernetesMonitor>();
-            services.AddHostedService<HealthCheckWorker>();
-
-            return builder;
+            return new HealthChecksBuilder(services);
         }
 
         /*

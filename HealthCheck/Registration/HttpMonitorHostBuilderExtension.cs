@@ -18,7 +18,7 @@ namespace HealthCheck.Registration
         /// <remarks>
         /// Kept for backwards compatiblity for apps using IHostBuilder that use callbacks
         /// </remarks>
-        public static IHostBuilder AddHttpMonitor(this IHostBuilder builder)
+        public static IHostBuilder UseHttpMonitor(this IHostBuilder builder)
         {
             return builder.ConfigureServices(ConfigureServices);
         }
@@ -29,7 +29,7 @@ namespace HealthCheck.Registration
         /// <param name="builder"></param>
         /// <param name="configureOptions"></param>
         /// <returns></returns>
-        public static IHostBuilder AddHttpMonitor(this IHostBuilder builder, Action<HttpMonitorOptions> configureOptions)
+        public static IHostBuilder UseHttpMonitor(this IHostBuilder builder, Action<HttpMonitorOptions> configureOptions)
         {
             ArgumentNullException.ThrowIfNull(configureOptions, nameof(configureOptions));
             return builder.ConfigureServices(services =>
@@ -45,7 +45,7 @@ namespace HealthCheck.Registration
         /// <param name="builder"></param>
         /// <param name="configureOptions"></param>
         /// <returns></returns>
-        public static IHostBuilder AddHttpMonitor(this IHostBuilder builder, Action<HostBuilderContext, HttpMonitorOptions> configureOptions)
+        public static IHostBuilder UseHttpMonitor(this IHostBuilder builder, Action<HostBuilderContext, HttpMonitorOptions> configureOptions)
         {
             ArgumentNullException.ThrowIfNull(configureOptions, nameof(configureOptions));
             return builder.ConfigureServices((context, services) =>
@@ -63,7 +63,7 @@ namespace HealthCheck.Registration
         /// <remarks>
         /// Update for more modern approach that uses more linear coding style
         /// </remarks>
-        public static IHostApplicationBuilder AddHttpMonitor(this IHostApplicationBuilder builder)
+        public static IHostApplicationBuilder UseHttpMonitor(this IHostApplicationBuilder builder)
         {
             ConfigureServices(builder.Services);
             return builder;
@@ -75,7 +75,7 @@ namespace HealthCheck.Registration
         /// <param name="builder"></param>
         /// <param name="configureOptions"></param>
         /// <returns></returns>
-        public static IHostApplicationBuilder AddHttpMonitor(this IHostApplicationBuilder builder, Action<HttpMonitorOptions> configureOptions)
+        public static IHostApplicationBuilder UseHttpMonitor(this IHostApplicationBuilder builder, Action<HttpMonitorOptions> configureOptions)
         {
             ArgumentNullException.ThrowIfNull(configureOptions, nameof(configureOptions));
             ConfigureServices(builder.Services);

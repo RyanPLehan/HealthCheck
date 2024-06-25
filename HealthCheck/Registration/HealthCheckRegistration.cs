@@ -7,6 +7,6 @@ namespace HealthCheck.Registration
     {
         public Type Type { get; init; }
         public string Name { get; init; }
-        public HealthCheckType HealthCheckType { get; init; }
+        public IEnumerable<string> Tags { get; init; } = Enumerable.Empty<string>();
     }
 }

@@ -12,29 +12,28 @@ namespace HealthCheck.Registration
     /// </remarks>
     internal static class RegistrationRepository
     {
-        private static ConcurrentDictionary<Tuple<string, HealthCheckType>, HealthCheckRegistration> _dict = 
-            new ConcurrentDictionary<Tuple<string, HealthCheckType>, HealthCheckRegistration>();
+        private static ConcurrentDictionary<string, HealthCheckRegistration> _dict = new ConcurrentDictionary<string, HealthCheckRegistration>();
 
 
         public static void Add(HealthCheckRegistration registration)
-            => _dict.TryAdd(CreateKey(registration.Type, registration.HealthCheckType), registration);
+            => _dict.TryAdd(CreateKey(registration.Type), registration);
 
 
-        public static HealthCheckRegistration? Get<T>(HealthCheckType healthCheckType)
-            => Get(typeof(T), healthCheckType);
+        public static HealthCheckRegistration? Get<T>)
+            => Get(typeof(T));
 
-        public static HealthCheckRegistration? Get(Type type, HealthCheckType healthCheckType) 
-            => _dict.GetValueOrDefault(CreateKey(type, healthCheckType), null);
-
-
-        public static void Remove<T>(HealthCheckType healthCheckType)
-            => Remove(typeof(T), healthCheckType);
-
-        public static void Remove(Type type, HealthCheckType healthCheckType)
-            => _dict.Remove(CreateKey(type, healthCheckType), out HealthCheckRegistration value);
+        public static HealthCheckRegistration? Get(Type type) 
+            => _dict.GetValueOrDefault(CreateKey(type), null);
 
 
-        private static Tuple<string, HealthCheckType> CreateKey(Type type, HealthCheckType healthCheckType)
-            => new Tuple<string, HealthCheckType>(type.AssemblyQualifiedName, healthCheckType);
+        public static void Remove<T>()
+            => Remove(typeof(T));
+
+        public static void Remove(Type type)
+            => _dict.Remove(CreateKey(type), out HealthCheckRegistration value);
+
+
+        private static string CreateKey(Type type)
+            => type.AssemblyQualifiedName;
     }
 }
