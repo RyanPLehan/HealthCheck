@@ -11,6 +11,11 @@ namespace HealthCheck.Registration
             return new HealthChecksBuilder(services);
         }
 
+        public static IHttpEndpointBuilder MapHttpEndpoints(this IServiceCollection services)
+        {
+            return new HttpEndpointBuilder(services);
+        }
+
         /*
         /// <summary>
         /// Add Health Checks

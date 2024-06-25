@@ -10,9 +10,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using HealthCheck.Configuration;
 using HealthCheck.Formatters;
+using HealthCheck.Services;
 
-
-namespace HealthCheck.Services
+namespace HealthCheck.Monitors.Http
 {
     /// <summary>
     /// This will respond to HTTP probes using the given port by issuing HTTP 200 or HTTP 503 status codes
@@ -36,7 +36,7 @@ namespace HealthCheck.Services
     {
         protected const int MAX_REQUEST_MESSAGE_SIZE = 1024;
         private readonly ILogger _logger;
-        private readonly IHealthCheckService _healthCheckService;
+        private readonly IHealthCheckServiceProvider _healthCheckService;
         private readonly ProbeLogOptions _probeLogOptions;
 
         // Place holders
@@ -45,7 +45,7 @@ namespace HealthCheck.Services
         private IDictionary<HealthCheckType, string> _healthCheckEndpoints;
 
         protected HttpMonitorBase(ILogger logger,
-                                  IHealthCheckService healthCheckService,
+                                  IHealthCheckServiceProvider healthCheckService,
                                   IOptions<ProbeLogOptions> probeLogOptions)
         {
             ArgumentNullException.ThrowIfNull(logger, nameof(logger));
@@ -315,10 +315,10 @@ namespace HealthCheck.Services
                     Status = report.Status.ToString(),
                     HealthChecks = report.Entries.Select(e => new
                     {
-                        Key = e.Key,
+                        e.Key,
                         Status = e.Value.Status.ToString(),
-                        Description = e.Value.Description,
-                        Data = e.Value.Data,
+                        e.Value.Description,
+                        e.Value.Data,
                         Exception = e.Value.Exception?.Message,
                     }),
                 }

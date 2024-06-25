@@ -4,82 +4,83 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using HealthCheck.Configuration;
 using HealthCheck.Services;
+using HealthCheck.Monitors.Http;
 
 
 namespace HealthCheck.Registration
 {
-    public static class HttpsMonitorHostBuilderExtension
+    public static class HttpMonitorHostBuilderExtension
     {
         /// <summary>
-        /// Add HTTPS Monitor
+        /// Add HTTP Monitor
         /// </summary>
         /// <param name="builder"></param>
         /// <returns></returns>
         /// <remarks>
         /// Kept for backwards compatiblity for apps using IHostBuilder that use callbacks
         /// </remarks>
-        public static IHostBuilder UseHttpsMonitor(this IHostBuilder builder)
+        public static IHostBuilder UseHttpMonitor(this IHostBuilder builder)
         {
             return builder.ConfigureServices(ConfigureServices);
         }
 
         /// <summary>
-        /// Add HTTPS Monitor
+        /// Add HTTP Monitor
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="configureOptions"></param>
         /// <returns></returns>
-        public static IHostBuilder UseHttpsMonitor(this IHostBuilder builder, Action<HttpsMonitorOptions> configureOptions)
+        public static IHostBuilder UseHttpMonitor(this IHostBuilder builder, Action<HttpMonitorOptions> configureOptions)
         {
             ArgumentNullException.ThrowIfNull(configureOptions, nameof(configureOptions));
             return builder.ConfigureServices(services =>
             {
                 ConfigureServices(services);    // Set custome services
-                services.Configure<HttpsMonitorOptions>(options => configureOptions(options));      // Call delegate
+                services.Configure<HttpMonitorOptions>(options => configureOptions(options));      // Call delegate
             });
         }
 
         /// <summary>
-        /// Add HTTPS Monitor
+        /// Add HTTP Monitor
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="configureOptions"></param>
         /// <returns></returns>
-        public static IHostBuilder UseHttpsMonitor(this IHostBuilder builder, Action<HostBuilderContext, HttpsMonitorOptions> configureOptions)
+        public static IHostBuilder UseHttpMonitor(this IHostBuilder builder, Action<HostBuilderContext, HttpMonitorOptions> configureOptions)
         {
             ArgumentNullException.ThrowIfNull(configureOptions, nameof(configureOptions));
             return builder.ConfigureServices((context, services) =>
             {
                 ConfigureServices(services);    // Set custome services
-                services.Configure<HttpsMonitorOptions>(options => configureOptions(context, options));      // Call delegate
+                services.Configure<HttpMonitorOptions>(options => configureOptions(context, options));      // Call delegate
             });
         }
 
         /// <summary>
-        /// Add HTTPS Monitor
+        /// Add HTTP Monitor
         /// </summary>
         /// <param name="builder"></param>
         /// <returns></returns>
         /// <remarks>
         /// Update for more modern approach that uses more linear coding style
         /// </remarks>
-        public static IHostApplicationBuilder UseHttpsMonitor(this IHostApplicationBuilder builder)
+        public static IHostApplicationBuilder UseHttpMonitor(this IHostApplicationBuilder builder)
         {
             ConfigureServices(builder.Services);
             return builder;
         }
 
         /// <summary>
-        /// Add HTTPS Monitor
+        /// Add HTTP Monitor
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="configureOptions"></param>
         /// <returns></returns>
-        public static IHostApplicationBuilder UseHttpsMonitor(this IHostApplicationBuilder builder, Action<HttpsMonitorOptions> configureOptions)
+        public static IHostApplicationBuilder UseHttpMonitor(this IHostApplicationBuilder builder, Action<HttpMonitorOptions> configureOptions)
         {
             ArgumentNullException.ThrowIfNull(configureOptions, nameof(configureOptions));
             ConfigureServices(builder.Services);
-            builder.Services.Configure<HttpsMonitorOptions>(options => configureOptions(options));      // Call delegate
+            builder.Services.Configure<HttpMonitorOptions>(options => configureOptions(options));      // Call delegate
             return builder;
         }
 
@@ -87,8 +88,8 @@ namespace HealthCheck.Registration
         private static void ConfigureServices(IServiceCollection services)
         {
             services.AddMemoryCache();
-            services.TryAddSingleton<IHealthCheckService, HealthCheckService>();
-            services.AddHostedService<HttpsMonitor>();
+            services.TryAddSingleton<IHealthCheckServiceProvider, HealthCheckServiceProvider>();
+            services.AddHostedService<HttpMonitor>();
         }
     }
 }

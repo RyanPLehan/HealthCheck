@@ -13,11 +13,11 @@ namespace HealthCheck.DefaultChecks
     /// According to Microsoft documentation, it should return Unhealthy by default
     /// Any other health check result should come from developer
     /// </remarks>
-    internal class StatusCheck : IHealthCheck
+    internal class DefaultUnhealthyCheck : IHealthCheck
     {
         public Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken)
         {            
-            return Task.FromResult(HealthCheckResult.Unhealthy("In compliance with Microsoft, by default, always unhealthy"));
+            return Task.FromResult(HealthCheckResult.Unhealthy("By default, always unhealthy"));
         }
     }
 }

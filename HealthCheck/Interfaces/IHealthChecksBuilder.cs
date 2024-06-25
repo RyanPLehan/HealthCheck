@@ -16,5 +16,15 @@ namespace HealthCheck
         IHealthChecksBuilder AddCheck<TService>(string name, IEnumerable<string> tags) where TService : class, IHealthCheck;
         IHealthChecksBuilder AddCheck(IHealthCheck instance, string name);
         IHealthChecksBuilder AddCheck(IHealthCheck instance, string name, IEnumerable<string> tags);
+        
+        // default checks
+        IHealthChecksBuilder AddDefaultHealthyCheck(string name);
+        IHealthChecksBuilder AddDefaultHealthyCheck(string name, IEnumerable<string> tags);
+
+        IHealthChecksBuilder AddDefaultDegradedCheck(string name);
+        IHealthChecksBuilder AddDefaultDegradedCheck(string name, IEnumerable<string> tags);
+
+        IHealthChecksBuilder AddDefaultUnhealthyCheck(string name);
+        IHealthChecksBuilder AddDefaultUnhealthyCheck(string name, IEnumerable<string> tags);
     }
 }

@@ -12,7 +12,7 @@ using Microsoft.Extensions.Options;
 using HealthCheck.Configuration;
 
 
-namespace HealthCheck.Services
+namespace HealthCheck.Monitors.Http
 {
     /// <summary>
     /// This will respond to HTTPS probes
@@ -38,7 +38,7 @@ namespace HealthCheck.Services
         private X509Certificate2? _serverCertificate;
 
         public HttpsMonitor(ILogger<HttpsMonitor> logger,
-                            IHealthCheckService healthCheckService,
+                            IHealthCheckServiceProvider healthCheckService,
                             IOptions<ProbeLogOptions> probeLogOptions,
                             IOptions<HttpsMonitorOptions> monitorOptions)
             : base(logger, healthCheckService, probeLogOptions)
@@ -49,9 +49,9 @@ namespace HealthCheck.Services
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            if (!String.IsNullOrWhiteSpace(_monitorOptions.UseCertificateByIssuerName))
+            if (!string.IsNullOrWhiteSpace(_monitorOptions.UseCertificateByIssuerName))
                 _serverCertificate = GetServerCertificateByIssuer(StoreName.Root, _monitorOptions.UseCertificateByIssuerName);
-            else if (!String.IsNullOrWhiteSpace(_monitorOptions.UseCertificateBySubjectName))
+            else if (!string.IsNullOrWhiteSpace(_monitorOptions.UseCertificateBySubjectName))
                 _serverCertificate = GetServerCertificateBySubject(StoreName.Root, _monitorOptions.UseCertificateBySubjectName);
             else
                 _serverCertificate = GetServerCertificate(StoreName.Root);

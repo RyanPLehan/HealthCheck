@@ -13,11 +13,11 @@ namespace HealthCheck.DefaultChecks
     /// Will return Healthy by default.
     /// If other checks are needed, developer should add their own
     /// </remarks>
-    internal class ReadinessCheck : IHealthCheck
+    internal class DefaultDegradedCheck : IHealthCheck
     {
         public Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken)
         {            
-            return Task.FromResult(HealthCheckResult.Healthy("By default, always healthy"));
+            return Task.FromResult(HealthCheckResult.Degraded("By default, always degraded"));
         }
     }
 }

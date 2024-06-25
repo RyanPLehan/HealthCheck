@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using HealthCheck.Configuration;
 
-namespace HealthCheck.Services
+namespace HealthCheck.Monitors.Http
 {
     /// <summary>
     /// This will respond to HTTP probes using the given port by issuing HTTP 200 or HTTP 503 status codes
@@ -31,7 +31,7 @@ namespace HealthCheck.Services
         private readonly HttpMonitorOptions _monitorOptions;
 
         public HttpMonitor(ILogger<HttpMonitor> logger,
-                           IHealthCheckService healthCheckService,
+                           IHealthCheckServiceProvider healthCheckService,
                            IOptions<ProbeLogOptions> probeLogOptions,
                            IOptions<HttpMonitorOptions> monitorOptions)
             : base(logger, healthCheckService, probeLogOptions)

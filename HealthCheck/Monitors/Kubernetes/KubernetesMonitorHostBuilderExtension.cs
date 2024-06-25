@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using HealthCheck.Configuration;
 using HealthCheck.Services;
+using HealthCheck.Monitors.Kubernetes;
 
 
 namespace HealthCheck.Registration
@@ -87,7 +88,7 @@ namespace HealthCheck.Registration
         private static void ConfigureServices(IServiceCollection services)
         {
             services.AddMemoryCache();
-            services.TryAddSingleton<IHealthCheckService, HealthCheckService>();
+            services.TryAddSingleton<IHealthCheckServiceProvider, HealthCheckServiceProvider>();
             services.AddHostedService<KubernetesMonitor>();
         }
     }

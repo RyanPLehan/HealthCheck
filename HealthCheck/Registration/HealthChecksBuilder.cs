@@ -13,6 +13,7 @@ namespace HealthCheck.Registration
     internal sealed class HealthChecksBuilder : IHealthChecksBuilder
     {
         private readonly IServiceCollection _services;
+
         public HealthChecksBuilder(IServiceCollection services)
         {
             ArgumentNullException.ThrowIfNull(services, nameof(services));
@@ -82,6 +83,100 @@ namespace HealthCheck.Registration
             _services.TryAddEnumerable(ServiceDescriptor.Singleton<IHealthCheck>(instance));
             return this;
         }
+
+
+        /// <summary>
+        /// Add check that will always return healthy
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public IHealthChecksBuilder AddDefaultHealthyCheck(string name)
+        {
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+
+            CreateRegistration(typeof(DefaultHealthyCheck), name);
+            _services.TryAddEnumerable(ServiceDescriptor.Singleton<IHealthCheck, DefaultHealthyCheck>());
+            return this;
+        }
+
+        /// <summary>
+        /// Add check that will always return healthy
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="tags"></param>
+        /// <returns></returns>
+        public IHealthChecksBuilder AddDefaultHealthyCheck(string name, IEnumerable<string> tags)
+        {
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+            ArgumentNullException.ThrowIfNull(tags, nameof(tags));
+
+            CreateRegistration(typeof(DefaultHealthyCheck), name, tags);
+            _services.TryAddEnumerable(ServiceDescriptor.Singleton<IHealthCheck, DefaultHealthyCheck>());
+            return this;
+        }
+
+
+        /// <summary>
+        /// Add check that will always return Degraded
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public IHealthChecksBuilder AddDefaultDegradedCheck(string name)
+        {
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+
+            CreateRegistration(typeof(DefaultDegradedCheck), name);
+            _services.TryAddEnumerable(ServiceDescriptor.Singleton<IHealthCheck, DefaultDegradedCheck>());
+            return this;
+        }
+
+        /// <summary>
+        /// Add check that will always return Degraded
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="tags"></param>
+        /// <returns></returns>
+        public IHealthChecksBuilder AddDefaultDegradedCheck(string name, IEnumerable<string> tags)
+        {
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+            ArgumentNullException.ThrowIfNull(tags, nameof(tags));
+
+            CreateRegistration(typeof(DefaultDegradedCheck), name, tags);
+            _services.TryAddEnumerable(ServiceDescriptor.Singleton<IHealthCheck, DefaultDegradedCheck>());
+            return this;
+        }
+
+
+        /// <summary>
+        /// Add check that will always return Unhealthy
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public IHealthChecksBuilder AddDefaultUnhealthyCheck(string name)
+        {
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+
+            CreateRegistration(typeof(DefaultUnhealthyCheck), name);
+            _services.TryAddEnumerable(ServiceDescriptor.Singleton<IHealthCheck, DefaultUnhealthyCheck>());
+            return this;
+        }
+
+        /// <summary>
+        /// Add check that will always return Unhealthy
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="tags"></param>
+        /// <returns></returns>
+        public IHealthChecksBuilder AddDefaultUnhealthyCheck(string name, IEnumerable<string> tags)
+        {
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+            ArgumentNullException.ThrowIfNull(tags, nameof(tags));
+
+            CreateRegistration(typeof(DefaultUnhealthyCheck), name, tags);
+            _services.TryAddEnumerable(ServiceDescriptor.Singleton<IHealthCheck, DefaultUnhealthyCheck>());
+            return this;
+        }
+
 
 
 

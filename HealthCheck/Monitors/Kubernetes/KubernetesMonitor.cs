@@ -4,12 +4,13 @@ using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using HealthCheck.Configuration;
+using HealthCheck.Services;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 
-namespace HealthCheck.Services
+namespace HealthCheck.Monitors.Kubernetes
 {
     /// <summary>
     /// This will respond to TCP probes using the given port
@@ -30,7 +31,7 @@ namespace HealthCheck.Services
     internal class KubernetesMonitor : BackgroundService
     {
         private readonly ILogger<KubernetesMonitor> _logger;
-        private readonly IHealthCheckService _healthCheckService;
+        private readonly IHealthCheckServiceProvider _healthCheckService;
         private readonly ProbeLogOptions _probeLogOptions;
         private readonly KubernetesMonitorOptions _monitorOptions;
 
@@ -43,7 +44,7 @@ namespace HealthCheck.Services
 
 
         public KubernetesMonitor(ILogger<KubernetesMonitor> logger,
-                                 IHealthCheckService healthCheckService,
+                                 IHealthCheckServiceProvider healthCheckService,
                                  IOptions<ProbeLogOptions> probeLogOptions,
                                  IOptions<KubernetesMonitorOptions> monitorOptions)
         {

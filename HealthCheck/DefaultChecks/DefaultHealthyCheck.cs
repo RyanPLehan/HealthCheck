@@ -13,7 +13,7 @@ namespace HealthCheck.DefaultChecks
     /// Will return Healthy by default.
     /// If other checks are needed, developer should add their own
     /// </remarks>
-    internal class LivenessCheck : IHealthCheck
+    internal class DefaultHealthyCheck : IHealthCheck
     {
         public Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken)
         {            

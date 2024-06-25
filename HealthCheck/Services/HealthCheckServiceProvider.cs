@@ -12,14 +12,14 @@ namespace HealthCheck.Services
     /// <summary>
     /// This will execute the custom health check services
     /// </summary>
-    internal class HealthCheckService : IHealthCheckService
+    internal class HealthCheckServiceProvider : IHealthCheckServiceProvider
     {
         private const string NO_REGISTRATION_NAME = "Unregistered Health Check Service";
         private readonly ILogger _logger;
         private readonly IServiceProvider _serviceProvider;
 
-        public HealthCheckService(ILogger<HealthCheckService> logger,
-                                  IServiceProvider serviceProvider)
+        public HealthCheckServiceProvider(ILogger<HealthCheckServiceProvider> logger,
+                                          IServiceProvider serviceProvider)
         {
             ArgumentNullException.ThrowIfNull(logger, nameof(logger));
             ArgumentNullException.ThrowIfNull(serviceProvider, nameof(serviceProvider));
@@ -34,24 +34,8 @@ namespace HealthCheck.Services
             return await ExecuteCheckServices(HealthCheckType.Liveness, cancellationToken);
         }
 
-        public async Task<HealthReport> CheckReadiness(CancellationToken cancellationToken = default)
-        {
-            return await ExecuteCheckServices(HealthCheckType.Readiness, cancellationToken);
-        }
 
-        public async Task<HealthReport> CheckStartup(CancellationToken cancellationToken = default)
-        {
-            return await ExecuteCheckServices(HealthCheckType.Startup, cancellationToken);
-        }
-
-        public async Task<HealthReport> CheckStatus(CancellationToken cancellationToken = default)
-        {
-            return await ExecuteCheckServices(HealthCheckType.Status, cancellationToken);
-        }
-
-
-
-        public T GetProbeService<T>()
+        public T GetService<T>()
         {
             return (T)_serviceProvider.GetRequiredService(typeof(T));
         }
