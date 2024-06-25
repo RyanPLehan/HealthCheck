@@ -8,10 +8,10 @@ namespace HealthCheck.Services
     internal static class LoggingService
     {
 
-        public static void LogProbe(ILogger logger, ProbeLogOptions loggingOptions, HealthCheckType healthCheckType)
+        public static void LogProbe(ILogger logger, ProbeLogOptions loggingOptions, string probe)
         {
             if (loggingOptions.LogProbe)
-                logger.LogInformation("Health Check Probe: {0}", healthCheckType.ToString());
+                logger.LogInformation("Health Check Probe: {0}", probe);
         }
 
 
@@ -23,8 +23,16 @@ namespace HealthCheck.Services
                 logger.LogInformation("Health Check Result: {0}", healthReport.Status.ToString());
             }
 
+            if (loggingOptions.LogWhenDegraded &&
+                healthReport.Status == HealthStatus.Degraded)
+            {
+                logger.LogInformation("Health Check Result: {0}", healthReport.Status.ToString());
+                logger.LogWarning("Health Check Detailed Results: {0}", Json.Serialize(healthReport));
+            }
+
+
             if (loggingOptions.LogWhenNotHealthy &&
-                healthReport.Status != HealthStatus.Healthy)
+                healthReport.Status == HealthStatus.UnHealthy)
             {
                 logger.LogWarning("Health Check Result: {0}", healthReport.Status.ToString());
                 logger.LogWarning("Health Check Detailed Results: {0}", Json.Serialize(healthReport));

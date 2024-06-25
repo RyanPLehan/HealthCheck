@@ -19,7 +19,7 @@ namespace HealthCheck.Registration
             => _dict.TryAdd(CreateKey(registration.Type), registration);
 
 
-        public static HealthCheckRegistration? Get<T>)
+        public static HealthCheckRegistration? Get<T>()
             => Get(typeof(T));
 
         public static HealthCheckRegistration? Get(Type type) 

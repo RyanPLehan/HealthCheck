@@ -1,10 +1,12 @@
-﻿using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using HealthCheck.Configuration;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 
 namespace HealthCheck.Services
@@ -25,50 +27,86 @@ namespace HealthCheck.Services
     /// Then the monitor will not respond to the Readiness probe until the Startup Probe has occurred.
     /// The same applies to Liveness, in that, the monitor will not respond to the Liveness probe until the Readiness probe has occurred
     /// </remarks>
-    internal class KubernetesMonitor : IKubernetesMonitor
+    internal class KubernetesMonitor : BackgroundService
     {
         private readonly ILogger<KubernetesMonitor> _logger;
         private readonly IHealthCheckService _healthCheckService;
+        private readonly ProbeLogOptions _probeLogOptions;
+        private readonly KubernetesMonitorOptions _monitorOptions;
+
+        private enum ProbeTypeEnum : int
+        {
+            Startup = 0,
+            Readiness = 1,
+            Liveness = 2,
+        };
 
 
         public KubernetesMonitor(ILogger<KubernetesMonitor> logger,
-                               IHealthCheckService healthCheckService)
+                                 IHealthCheckService healthCheckService,
+                                 IOptions<ProbeLogOptions> probeLogOptions,
+                                 IOptions<KubernetesMonitorOptions> monitorOptions)
         {
             ArgumentNullException.ThrowIfNull(logger, nameof(logger));
             ArgumentNullException.ThrowIfNull(healthCheckService, nameof(healthCheckService));
+            ArgumentNullException.ThrowIfNull(probeLogOptions?.Value, nameof(probeLogOptions));
+            ArgumentNullException.ThrowIfNull(monitorOptions?.Value, nameof(monitorOptions));
 
             _logger = logger;
             _healthCheckService = healthCheckService;
+            _probeLogOptions = probeLogOptions.Value;
+            _monitorOptions = monitorOptions.Value;
         }
 
-        public async Task Monitor(TcpProbeOptions probeOptions, ProbeLogOptions loggingOptions, CancellationToken cancellationToken)
+        public override Task StartAsync(CancellationToken cancellationToken)
         {
-            // Yield so that caller can continue processing
-            await Task.Yield();
+            Task task;
+            try
+            {
+                _logger.LogInformation("Starting: Monitor");
+                task = base.StartAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Monitor failed to start");
+                task = Task.FromException(ex);
+            }
 
+            return task;
+        }
+
+        public override Task StopAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("Stopping: Monitor");
+            return base.StopAsync(cancellationToken);
+        }
+
+
+        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
+        {
             // Process in order of Startup, Readiness, then Liveness
             // Must wait for probe before going on to next one
-            if (probeOptions.Ports.Startup != null)
+            if (_monitorOptions.Startup != null)
             {
                 // One Time Monitoring
-                await ExecuteIntervalCheck(probeOptions.CheckRetryIntervalInSeconds, HealthCheckType.Startup, loggingOptions, cancellationToken);
-                await MonitorPort(probeOptions.Ports.Startup.Value, HealthCheckType.Startup, loggingOptions, cancellationToken);
+                await ExecuteIntervalCheck(_monitorOptions.CheckRetryIntervalInSeconds, ProbeTypeEnum.Startup, cancellationToken);
+                await MonitorPort(_monitorOptions.Startup.Port, ProbeTypeEnum.Startup, cancellationToken);
             }
 
-            if (probeOptions.Ports.Readiness != null)
+            if (_monitorOptions.Readiness != null)
             {
                 // One Time Monitoring
-                await ExecuteIntervalCheck(probeOptions.CheckRetryIntervalInSeconds, HealthCheckType.Readiness, loggingOptions, cancellationToken);
-                await MonitorPort(probeOptions.Ports.Readiness.Value, HealthCheckType.Readiness, loggingOptions, cancellationToken);
+                await ExecuteIntervalCheck(_monitorOptions.CheckRetryIntervalInSeconds, ProbeTypeEnum.Readiness, cancellationToken);
+                await MonitorPort(_monitorOptions.Readiness.Port, ProbeTypeEnum.Readiness, cancellationToken);
             }
 
-            if (probeOptions.Ports.Liveness != null)
+            if (_monitorOptions.Liveness != null)
             {
                 // Keep monitoring for duration of application
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    await ExecuteIntervalCheck(probeOptions.CheckRetryIntervalInSeconds, HealthCheckType.Liveness, loggingOptions, cancellationToken);
-                    await MonitorPort(probeOptions.Ports.Liveness.Value, HealthCheckType.Liveness, loggingOptions, cancellationToken);
+                    await ExecuteIntervalCheck(_monitorOptions.CheckRetryIntervalInSeconds, ProbeTypeEnum.Liveness, cancellationToken);
+                    await MonitorPort(_monitorOptions.Liveness.Port, ProbeTypeEnum.Liveness, cancellationToken);
                 }
             }
 
@@ -76,7 +114,7 @@ namespace HealthCheck.Services
         }
 
 
-        private async Task<HealthReport> ExecuteIntervalCheck(byte intervalInSeconds, HealthCheckType healthCheckType, ProbeLogOptions loggingOptions, CancellationToken cancellationToken)
+        private async Task<HealthReport> ExecuteIntervalCheck(byte intervalInSeconds, ProbeTypeEnum probeType, CancellationToken cancellationToken)
         {
             int intervalTimeInMS = intervalInSeconds * 1000;        // Convert from seconds to milliseconds
             HealthReport healthReport;
@@ -85,7 +123,7 @@ namespace HealthCheck.Services
             do
             {
                 healthReport = await _healthCheckService.ExecuteCheckServices(healthCheckType, cancellationToken);
-                LoggingService.LogHealthCheck(_logger, loggingOptions, healthReport);
+                LoggingService.LogHealthCheck(_logger, _probeLogOptions, healthReport);
 
                 if (healthReport.Status == HealthStatus.UnHealthy)
                     await Task.Delay(intervalTimeInMS);
@@ -96,7 +134,7 @@ namespace HealthCheck.Services
         }
 
 
-        private async Task MonitorPort(int port, HealthCheckType healthCheckType, ProbeLogOptions loggingOptions, CancellationToken cancellationToken)
+        private async Task MonitorPort(int port, ProbeTypeEnum probeType, CancellationToken cancellationToken)
         {
             try
             {
@@ -109,18 +147,18 @@ namespace HealthCheck.Services
 
                     // Accept and close to acknowledge
                     using TcpClient client = await listener.AcceptTcpClientAsync(cancellationToken);
-                    LoggingService.LogProbe(_logger, loggingOptions, healthCheckType);
+                    LoggingService.LogProbe(_logger, _probeLogOptions, probeType.ToString());
                 }
             }
 
             catch (OperationCanceledException ex)
             {
-                _logger.LogError(ex, "TCP Probe Service shutting down by request");
+                _logger.LogError(ex, "Monitor shutting down by request");
             }
 
             catch (Exception ex)
             {
-                _logger.LogError(ex, "TCP Probe Service listener encountered an error and is shutting down");
+                _logger.LogError(ex, "Monitor encountered an error and is shutting down");
             }
 
             await Task.CompletedTask;
