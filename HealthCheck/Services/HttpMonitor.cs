@@ -1,11 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
-using System.Text;
-using HealthCheck.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using HealthCheck.Configuration;
 
 namespace HealthCheck.Services
 {

@@ -11,7 +11,7 @@ namespace HealthCheck.Registration
     public static class HttpsMonitorHostBuilderExtension
     {
         /// <summary>
-        /// Add Health Check Monitor
+        /// Add HTTPS Monitor
         /// </summary>
         /// <param name="builder"></param>
         /// <returns></returns>
@@ -20,13 +20,43 @@ namespace HealthCheck.Registration
         /// </remarks>
         public static IHostBuilder AddHttpsMonitor(this IHostBuilder builder)
         {
-            builder.ConfigureServices(ConfigureServices);
-            return builder;
+            return builder.ConfigureServices(ConfigureServices);
         }
 
+        /// <summary>
+        /// Add HTTPS Monitor
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <param name="configureOptions"></param>
+        /// <returns></returns>
+        public static IHostBuilder AddHttpsMonitor(this IHostBuilder builder, Action<HttpsMonitorOptions> configureOptions)
+        {
+            ArgumentNullException.ThrowIfNull(configureOptions, nameof(configureOptions));
+            return builder.ConfigureServices(services =>
+            {
+                ConfigureServices(services);    // Set custome services
+                services.Configure<HttpsMonitorOptions>(options => configureOptions(options));      // Call delegate
+            });
+        }
 
         /// <summary>
-        /// Add Health Check Monitor
+        /// Add HTTPS Monitor
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <param name="configureOptions"></param>
+        /// <returns></returns>
+        public static IHostBuilder AddHttpsMonitor(this IHostBuilder builder, Action<HostBuilderContext, HttpsMonitorOptions> configureOptions)
+        {
+            ArgumentNullException.ThrowIfNull(configureOptions, nameof(configureOptions));
+            return builder.ConfigureServices((context, services) =>
+            {
+                ConfigureServices(services);    // Set custome services
+                services.Configure<HttpsMonitorOptions>(options => configureOptions(context, options));      // Call delegate
+            });
+        }
+
+        /// <summary>
+        /// Add HTTPS Monitor
         /// </summary>
         /// <param name="builder"></param>
         /// <returns></returns>
@@ -39,14 +69,26 @@ namespace HealthCheck.Registration
             return builder;
         }
 
+        /// <summary>
+        /// Add HTTPS Monitor
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <param name="configureOptions"></param>
+        /// <returns></returns>
+        public static IHostApplicationBuilder AddHttpsMonitor(this IHostApplicationBuilder builder, Action<HttpsMonitorOptions> configureOptions)
+        {
+            ArgumentNullException.ThrowIfNull(configureOptions, nameof(configureOptions));
+            ConfigureServices(builder.Services);
+            builder.Services.Configure<HttpsMonitorOptions>(options => configureOptions(options));      // Call delegate
+            return builder;
+        }
+
 
         private static void ConfigureServices(IServiceCollection services)
         {
             services.AddMemoryCache();
             services.TryAddSingleton<IHealthCheckService, HealthCheckService>();
-
             services.AddHostedService<HttpsMonitor>();
-
         }
     }
 }

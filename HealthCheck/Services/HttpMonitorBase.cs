@@ -10,7 +10,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using HealthCheck.Configuration;
 using HealthCheck.Formatters;
-using System.Threading;
 
 
 namespace HealthCheck.Services

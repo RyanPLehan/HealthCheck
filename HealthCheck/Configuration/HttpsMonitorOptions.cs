@@ -6,6 +6,7 @@ namespace HealthCheck.Configuration
     public class HttpsMonitorOptions
     {
         public int Port { get; set; } = 443;
-        public string CertificateIssuer { get; set; }
+        public string UseCertificateByIssuerName { get; set; }
+        public string UseCertificateBySubjectName { get; set; }
     }
 }

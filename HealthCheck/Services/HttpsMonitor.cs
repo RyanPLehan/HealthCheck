@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -8,11 +7,10 @@ using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
-using System.Text;
-using HealthCheck.Configuration;
-using HealthCheck.Formatters;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using static System.Formats.Asn1.AsnWriter;
+using HealthCheck.Configuration;
+
 
 namespace HealthCheck.Services
 {
@@ -51,10 +49,12 @@ namespace HealthCheck.Services
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            if (String.IsNullOrWhiteSpace(_monitorOptions.CertificateIssuer))
-                _serverCertificate = GetServerCertificate(StoreName.Root);
+            if (!String.IsNullOrWhiteSpace(_monitorOptions.UseCertificateByIssuerName))
+                _serverCertificate = GetServerCertificateByIssuer(StoreName.Root, _monitorOptions.UseCertificateByIssuerName);
+            else if (!String.IsNullOrWhiteSpace(_monitorOptions.UseCertificateBySubjectName))
+                _serverCertificate = GetServerCertificateBySubject(StoreName.Root, _monitorOptions.UseCertificateBySubjectName);
             else
-                _serverCertificate = GetServerCertificate(StoreName.Root, _monitorOptions.CertificateIssuer);
+                _serverCertificate = GetServerCertificate(StoreName.Root);
 
 
             if (_serverCertificate != null)
@@ -119,7 +119,7 @@ namespace HealthCheck.Services
         }
 
 
-        private X509Certificate2? GetServerCertificate(StoreName storeName, string issuer)
+        private X509Certificate2? GetServerCertificateByIssuer(StoreName storeName, string issuerName)
         {
             X509Certificate2? x509Certificate = null;
             StoreLocation[] storeLocations = (StoreLocation[])Enum.GetValues(typeof(StoreLocation));
@@ -133,7 +133,41 @@ namespace HealthCheck.Services
                 {
                     store.Open(OpenFlags.OpenExistingOnly);
                     var certsByIssuer = store.Certificates
-                                             .Find(X509FindType.FindByIssuerName, issuer, true);
+                                             .Find(X509FindType.FindByIssuerName, issuerName, true);
+
+                    x509Certificate = GetServerCertificate(certsByIssuer);
+                    if (x509Certificate != null)
+                        break;
+                }
+
+                // Certificate Store cannot be openned
+                catch (CryptographicException)
+                { }
+
+                // Caller does not have the required permission for Certificate
+                catch (SecurityException)
+                { }
+            }
+
+            return x509Certificate;
+        }
+
+
+        private X509Certificate2? GetServerCertificateBySubject(StoreName storeName, string subjectName)
+        {
+            X509Certificate2? x509Certificate = null;
+            StoreLocation[] storeLocations = (StoreLocation[])Enum.GetValues(typeof(StoreLocation));
+
+            // Iterate through store locations (ie current user and local machine)
+            foreach (StoreLocation storeLocation in storeLocations)
+            {
+                X509Store store = new X509Store(storeName, storeLocation);
+
+                try
+                {
+                    store.Open(OpenFlags.OpenExistingOnly);
+                    var certsByIssuer = store.Certificates
+                                             .Find(X509FindType.FindBySubjectName, subjectName, true);
 
                     x509Certificate = GetServerCertificate(certsByIssuer);
                     if (x509Certificate != null)
