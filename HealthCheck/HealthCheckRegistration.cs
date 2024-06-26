@@ -1,9 +1,9 @@
 ﻿using System;
 
 
-namespace HealthCheck.Registration
+namespace HealthCheck
 {
-    internal class HealthCheckRegistration
+    public class HealthCheckRegistration
     {
         public Type Type { get; init; }
         public string Name { get; init; }

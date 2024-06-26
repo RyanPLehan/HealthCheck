@@ -1,9 +1,8 @@
-﻿using HealthCheck;
-using System;
+﻿using System;
 
-namespace HealthCheck.Configuration
+namespace HealthCheck.Listeners.Web.Https
 {
-    public class HttpsMonitorOptions
+    public class HttpsListenerOptions
     {
         public int Port { get; set; } = 443;
         public string UseCertificateByIssuerName { get; set; }

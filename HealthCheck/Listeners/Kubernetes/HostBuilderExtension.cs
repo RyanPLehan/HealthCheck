@@ -4,92 +4,92 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using HealthCheck.Configuration;
 using HealthCheck.Services;
-using HealthCheck.Monitors.Http;
+using HealthCheck.Listeners.Kubernetes;
 
 
 namespace HealthCheck.Registration
 {
-    public static class HttpsMonitorHostBuilderExtension
+    public static partial class HostBuilderExtension
     {
         /// <summary>
-        /// Add HTTPS Monitor
+        /// Add Kubernetes Listener
         /// </summary>
         /// <param name="builder"></param>
         /// <returns></returns>
         /// <remarks>
         /// Kept for backwards compatiblity for apps using IHostBuilder that use callbacks
         /// </remarks>
-        public static IHostBuilder UseHttpsMonitor(this IHostBuilder builder)
+        public static IHostBuilder UseKubernetesListener(this IHostBuilder builder)
         {
-            return builder.ConfigureServices(ConfigureServices);
+            return builder.ConfigureServices(ConfigureKubernetesListener);
         }
 
         /// <summary>
-        /// Add HTTPS Monitor
+        /// Add Kubernetes Listener
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="configureOptions"></param>
         /// <returns></returns>
-        public static IHostBuilder UseHttpsMonitor(this IHostBuilder builder, Action<HttpsMonitorOptions> configureOptions)
+        public static IHostBuilder UseKubernetesListener(this IHostBuilder builder, Action<KubernetesListenerOptions> configureOptions)
         {
             ArgumentNullException.ThrowIfNull(configureOptions, nameof(configureOptions));
             return builder.ConfigureServices(services =>
             {
-                ConfigureServices(services);    // Set custome services
-                services.Configure<HttpsMonitorOptions>(options => configureOptions(options));      // Call delegate
+                ConfigureKubernetesListener(services);    // Set custome services
+                services.Configure<KubernetesListenerOptions>(options => configureOptions(options));      // Call delegate
             });
         }
 
         /// <summary>
-        /// Add HTTPS Monitor
+        /// Add Kubernetes Listener
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="configureOptions"></param>
         /// <returns></returns>
-        public static IHostBuilder UseHttpsMonitor(this IHostBuilder builder, Action<HostBuilderContext, HttpsMonitorOptions> configureOptions)
+        public static IHostBuilder UseKubernetesListener(this IHostBuilder builder, Action<HostBuilderContext, KubernetesListenerOptions> configureOptions)
         {
             ArgumentNullException.ThrowIfNull(configureOptions, nameof(configureOptions));
             return builder.ConfigureServices((context, services) =>
             {
-                ConfigureServices(services);    // Set custome services
-                services.Configure<HttpsMonitorOptions>(options => configureOptions(context, options));      // Call delegate
+                ConfigureKubernetesListener(services);    // Set custome services
+                services.Configure<KubernetesListenerOptions>(options => configureOptions(context, options));      // Call delegate
             });
         }
 
         /// <summary>
-        /// Add HTTPS Monitor
+        /// Add Kubernetes Listener
         /// </summary>
         /// <param name="builder"></param>
         /// <returns></returns>
         /// <remarks>
         /// Update for more modern approach that uses more linear coding style
         /// </remarks>
-        public static IHostApplicationBuilder UseHttpsMonitor(this IHostApplicationBuilder builder)
+        public static IHostApplicationBuilder UseKubernetesListener(this IHostApplicationBuilder builder)
         {
-            ConfigureServices(builder.Services);
+            ConfigureKubernetesListener(builder.Services);
             return builder;
         }
 
         /// <summary>
-        /// Add HTTPS Monitor
+        /// Add Kubernetes Listener
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="configureOptions"></param>
         /// <returns></returns>
-        public static IHostApplicationBuilder UseHttpsMonitor(this IHostApplicationBuilder builder, Action<HttpsMonitorOptions> configureOptions)
+        public static IHostApplicationBuilder UseKubernetesListener(this IHostApplicationBuilder builder, Action<KubernetesListenerOptions> configureOptions)
         {
             ArgumentNullException.ThrowIfNull(configureOptions, nameof(configureOptions));
-            ConfigureServices(builder.Services);
-            builder.Services.Configure<HttpsMonitorOptions>(options => configureOptions(options));      // Call delegate
+            ConfigureKubernetesListener(builder.Services);
+            builder.Services.Configure<KubernetesListenerOptions>(options => configureOptions(options));      // Call delegate
             return builder;
         }
 
 
-        private static void ConfigureServices(IServiceCollection services)
+        private static void ConfigureKubernetesListener(IServiceCollection services)
         {
             services.AddMemoryCache();
             services.TryAddSingleton<IHealthCheckServiceProvider, HealthCheckServiceProvider>();
-            services.AddHostedService<HttpsMonitor>();
+            services.AddHostedService<KubernetesListener>();
         }
     }
 }

@@ -2,7 +2,7 @@ using HealthCheck.Registration;
 using System.Net.Sockets;
 
 
-namespace HealthCheck.Tests.KubernetesMonitor
+namespace HealthCheck.Tests.KubernetesListener
 {
     [TestClass]
     public class DefaultChecksTest 
@@ -31,7 +31,7 @@ namespace HealthCheck.Tests.KubernetesMonitor
         [DataRow("Startup", 8081, 1)]
         [DataRow("Readiness", 8081, 1)]
         [DataRow("Liveness", 8081, 3)]
-        public async Task TestPortMonitor(string monitor, int port, int iterationCount)
+        public async Task TestPortListener(string Listener, int port, int iterationCount)
         {
             // Arrange
             for (int i = 0; i < iterationCount; i++)

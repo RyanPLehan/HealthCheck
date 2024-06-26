@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using HealthCheck;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace HealthCheck.Registration
+namespace HealthCheck.Listeners.Web
 {
-    internal class HttpEndpointBuilder : IHttpEndpointBuilder
+    internal class EndpointBuilder : IEndpointBuilder
     {
         private readonly IServiceCollection _services;
 
@@ -14,10 +13,10 @@ namespace HealthCheck.Registration
         /// </summary>
         /// <param name="services"></param>
         /// <remarks>
-        /// This will be used for both HTTP and HTTPS monitors
+        /// This will be used for both HTTP and HTTPS Listeners
         /// <see cref="https://github.com/dotnet/AspNetCore/blob/main/src/Middleware/HealthChecks/src/Builder/HealthCheckEndpointRouteBuilderExtensions.cs"/>
         /// </remarks>
-        public HttpEndpointBuilder(IServiceCollection services)
+        public EndpointBuilder(IServiceCollection services)
         {
             ArgumentNullException.ThrowIfNull(services, nameof(services));
             _services = services;
@@ -25,9 +24,9 @@ namespace HealthCheck.Registration
 
         public IServiceCollection Services => _services;
 
-        public IHttpEndpointBuilder MapHealthChecks([StringSyntax("Route")] string pattern)
+        public IEndpointBuilder MapHealthChecks([StringSyntax("Route")] string pattern)
         {
-            ArgumentNullException.ThrowIfNullOrWhiteSpace(pattern, nameof(pattern));
+            ArgumentException.ThrowIfNullOrWhiteSpace(pattern, nameof(pattern));
 
             // TODO: Create class that adds endpoint to Enumerable Singleton service
             return this;

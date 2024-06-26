@@ -2,7 +2,7 @@
 
 namespace HealthCheck.Configuration
 {
-    public class KubernetesMonitorOptions
+    public class KubernetesListenerOptions
     {
         public byte CheckRetryIntervalInSeconds { get; set; } = 5;
         public KubernetesProbeOptions Startup { get; set; } = new KubernetesProbeOptions();

@@ -12,7 +12,7 @@ using HealthCheck.Configuration;
 using HealthCheck.Formatters;
 using HealthCheck.Services;
 
-namespace HealthCheck.Monitors.Http
+namespace HealthCheck.Listeners.Web
 {
     /// <summary>
     /// This will respond to HTTP probes using the given port by issuing HTTP 200 or HTTP 503 status codes
@@ -32,21 +32,21 @@ namespace HealthCheck.Monitors.Http
     ///     1.  If the request is not a HTTP GET method, then a 405 Method Not Allowed is returned
     ///     2.  If an endpoint is not matched, then a 404 Not Found is returned
     /// </remarks>
-    internal abstract class HttpMonitorBase : BackgroundService
+    internal abstract class ListenerBase : BackgroundService
     {
         protected const int MAX_REQUEST_MESSAGE_SIZE = 1024;
         private readonly ILogger _logger;
         private readonly IHealthCheckServiceProvider _healthCheckService;
-        private readonly ProbeLogOptions _probeLogOptions;
+        private readonly ListenerLogOptions _probeLogOptions;
 
         // Place holders
         private EndpointAssignment _endpoints;
 
         private IDictionary<HealthCheckType, string> _healthCheckEndpoints;
 
-        protected HttpMonitorBase(ILogger logger,
+        protected ListenerBase(ILogger logger,
                                   IHealthCheckServiceProvider healthCheckService,
-                                  IOptions<ProbeLogOptions> probeLogOptions)
+                                  IOptions<ListenerLogOptions> probeLogOptions)
         {
             ArgumentNullException.ThrowIfNull(logger, nameof(logger));
             ArgumentNullException.ThrowIfNull(healthCheckService, nameof(healthCheckService));
@@ -67,12 +67,12 @@ namespace HealthCheck.Monitors.Http
             {
                 IDictionary<HealthCheckType, string> healthCheckEndpoints = CreateHealthCheckEndpointDictionary(_endpoints);
 
-                _logger.LogInformation("Starting: Monitor");
+                _logger.LogInformation("Starting: Listener");
                 task = base.StartAsync(cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Monitor failed to start");
+                _logger.LogError(ex, "Listener failed to start");
                 task = Task.FromException(ex);
             }
 
@@ -81,7 +81,7 @@ namespace HealthCheck.Monitors.Http
 
         public override Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Stopping: Monitor");
+            _logger.LogInformation("Stopping: Listener");
             return base.StopAsync(cancellationToken);
         }
 
@@ -91,13 +91,13 @@ namespace HealthCheck.Monitors.Http
             // Double check to make sure there is at least one endpoint
             if (!_healthCheckEndpoints.Any())
             {
-                _logger.LogWarning("No endpoints defined.  Monitor shutting down.");
+                _logger.LogWarning("No endpoints defined.  Listener shutting down.");
                 await Task.CompletedTask;
                 return;
             }
 
 
-            // Start monitoring process
+            // Start Listenering process
             using (TcpListener listener = CreateTcpListener())
             {
                 listener.Start();

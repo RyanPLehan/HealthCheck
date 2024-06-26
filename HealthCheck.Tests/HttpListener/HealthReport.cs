@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace HealthCheck.Tests.HttpMonitor
+namespace HealthCheck.Tests.HttpListener
 {
     internal class HealthReport
     {

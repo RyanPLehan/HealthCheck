@@ -2,9 +2,9 @@
 using System;
 
 
-namespace HealthCheck
+namespace HealthCheck.Listeners.Web
 {
-    public class IHttpEndpointBuilder
+    public class IEndpointBuilder
     {
         IServiceCollection Services { get; }
     }

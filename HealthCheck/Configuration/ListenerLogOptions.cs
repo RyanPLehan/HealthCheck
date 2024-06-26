@@ -3,7 +3,7 @@
 
 namespace HealthCheck.Configuration
 {
-    public class ProbeLogOptions
+    public class ListenerLogOptions
     {
         // TODO: Use Callback function to determine when to log based upon health status
         public bool LogProbe { get; set; } = true;

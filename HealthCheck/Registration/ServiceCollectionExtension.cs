@@ -1,4 +1,5 @@
 ﻿using System;
+using HealthCheck.Listeners.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -11,9 +12,9 @@ namespace HealthCheck.Registration
             return new HealthChecksBuilder(services);
         }
 
-        public static IHttpEndpointBuilder MapHttpEndpoints(this IServiceCollection services)
+        public static IEndpointBuilder MapHttpEndpoints(this IServiceCollection services)
         {
-            return new HttpEndpointBuilder(services);
+            return new EndpointBuilder(services);
         }
 
         /*

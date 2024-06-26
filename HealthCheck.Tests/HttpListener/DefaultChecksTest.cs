@@ -3,7 +3,7 @@ using HealthCheck.Registration;
 using HealthCheck.Tests.Formatters;
 
 
-namespace HealthCheck.Tests.HttpMonitor
+namespace HealthCheck.Tests.HttpListener
 {
     [TestClass]
     public class DefaultChecksTest
@@ -27,7 +27,7 @@ namespace HealthCheck.Tests.HttpMonitor
 
         [TestMethod]
         [DataRow("health/status")]
-        public async Task TestHttpStatusMonitor(string endpoint)
+        public async Task TestHttpStatusListener(string endpoint)
         {
             // Arrange
             Uri address = UrlBuilder.BuildHttp(endpoint);
@@ -51,7 +51,7 @@ namespace HealthCheck.Tests.HttpMonitor
 
         [TestMethod]
         [DataRow("health/status")]
-        public async Task TestHttpsStatusMonitor(string endpoint)
+        public async Task TestHttpsStatusListener(string endpoint)
         {
             // Arrange
             Uri address = UrlBuilder.BuildHttps(endpoint);
@@ -79,7 +79,7 @@ namespace HealthCheck.Tests.HttpMonitor
         [DataRow("health/startup")]
         [DataRow("health/readiness")]
         [DataRow("health/liveness")]
-        public async Task TestHttpPortMonitor(string endpoint)
+        public async Task TestHttpPortListener(string endpoint)
         {
             // Arrange
             Uri address = UrlBuilder.BuildHttp(endpoint);
@@ -103,7 +103,7 @@ namespace HealthCheck.Tests.HttpMonitor
         [DataRow("health/startup")]
         [DataRow("health/readiness")]
         [DataRow("health/liveness")]
-        public async Task TestHttpsPortMonitor(string endpoint)
+        public async Task TestHttpsPortListener(string endpoint)
         {
             // Arrange
             Uri address = UrlBuilder.BuildHttps(endpoint);

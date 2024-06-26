@@ -10,9 +10,10 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using HealthCheck.Configuration;
+using HealthCheck.Listeners.Web;
 
 
-namespace HealthCheck.Monitors.Http
+namespace HealthCheck.Listeners.Web.Https
 {
     /// <summary>
     /// This will respond to HTTPS probes
@@ -32,27 +33,27 @@ namespace HealthCheck.Monitors.Http
     ///     1.  If the request is not a HTTP GET method, then a 405 Method Not Allowed is returned
     ///     2.  If an endpoint is not matched, then a 404 Not Found is returned
     /// </remarks>
-    internal sealed class HttpsMonitor : HttpMonitorBase
+    internal sealed class HttpsListener : ListenerBase
     {
-        private readonly HttpsMonitorOptions _monitorOptions;
+        private readonly HttpsListenerOptions _ListenerOptions;
         private X509Certificate2? _serverCertificate;
 
-        public HttpsMonitor(ILogger<HttpsMonitor> logger,
+        public HttpsListener(ILogger<HttpsListener> logger,
                             IHealthCheckServiceProvider healthCheckService,
-                            IOptions<ProbeLogOptions> probeLogOptions,
-                            IOptions<HttpsMonitorOptions> monitorOptions)
+                            IOptions<ListenerLogOptions> probeLogOptions,
+                            IOptions<HttpsListenerOptions> ListenerOptions)
             : base(logger, healthCheckService, probeLogOptions)
         {
-            _monitorOptions = monitorOptions?.Value ??
-                throw new ArgumentNullException(nameof(monitorOptions));
+            _ListenerOptions = ListenerOptions?.Value ??
+                throw new ArgumentNullException(nameof(ListenerOptions));
         }
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            if (!string.IsNullOrWhiteSpace(_monitorOptions.UseCertificateByIssuerName))
-                _serverCertificate = GetServerCertificateByIssuer(StoreName.Root, _monitorOptions.UseCertificateByIssuerName);
-            else if (!string.IsNullOrWhiteSpace(_monitorOptions.UseCertificateBySubjectName))
-                _serverCertificate = GetServerCertificateBySubject(StoreName.Root, _monitorOptions.UseCertificateBySubjectName);
+            if (!string.IsNullOrWhiteSpace(_ListenerOptions.UseCertificateByIssuerName))
+                _serverCertificate = GetServerCertificateByIssuer(StoreName.Root, _ListenerOptions.UseCertificateByIssuerName);
+            else if (!string.IsNullOrWhiteSpace(_ListenerOptions.UseCertificateBySubjectName))
+                _serverCertificate = GetServerCertificateBySubject(StoreName.Root, _ListenerOptions.UseCertificateBySubjectName);
             else
                 _serverCertificate = GetServerCertificate(StoreName.Root);
 
@@ -75,8 +76,8 @@ namespace HealthCheck.Monitors.Http
         /// <returns></returns>
         protected override TcpListener CreateTcpListener()
         {
-            Asserts.Argument.AssertNotValidPort(_monitorOptions.Port);
-            return new TcpListener(IPAddress.Any, _monitorOptions.Port);
+            Asserts.Argument.AssertNotValidPort(_ListenerOptions.Port);
+            return new TcpListener(IPAddress.Any, _ListenerOptions.Port);
         }
 
 

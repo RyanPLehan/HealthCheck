@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 
-namespace HealthCheck.Monitors.Kubernetes
+namespace HealthCheck.Listeners.Kubernetes
 {
     /// <summary>
     /// This will respond to TCP probes using the given port
@@ -23,18 +23,13 @@ namespace HealthCheck.Monitors.Kubernetes
     /// 
     /// *** PLease Read the following ***
     /// Kuberentes has a Startup, Readiness, and Liveness Probe (in order)
-    /// Therefore, if defined, the monitoring will not progress until the Probe has occurred.
-    /// Meaning, if Startup, Readiness and Liveness are defined to be monitored.
-    /// Then the monitor will not respond to the Readiness probe until the Startup Probe has occurred.
-    /// The same applies to Liveness, in that, the monitor will not respond to the Liveness probe until the Readiness probe has occurred
+    /// Therefore, if defined, the Listenering will not progress until the Probe has occurred.
+    /// Meaning, if Startup, Readiness and Liveness are defined to be Listenered.
+    /// Then the Listener will not respond to the Readiness probe until the Startup Probe has occurred.
+    /// The same applies to Liveness, in that, the Listener will not respond to the Liveness probe until the Readiness probe has occurred
     /// </remarks>
-    internal class KubernetesMonitor : BackgroundService
+    internal class KubernetesListener : BackgroundService
     {
-        private readonly ILogger<KubernetesMonitor> _logger;
-        private readonly IHealthCheckServiceProvider _healthCheckService;
-        private readonly ProbeLogOptions _probeLogOptions;
-        private readonly KubernetesMonitorOptions _monitorOptions;
-
         private enum ProbeTypeEnum : int
         {
             Startup = 0,
@@ -42,21 +37,26 @@ namespace HealthCheck.Monitors.Kubernetes
             Liveness = 2,
         };
 
+        private readonly ILogger<KubernetesListener> _logger;
+        private readonly IHealthCheckServiceProvider _healthCheckService;
+        private readonly ListenerLogOptions _probeLogOptions;
+        private readonly KubernetesListenerOptions _ListenerOptions;
 
-        public KubernetesMonitor(ILogger<KubernetesMonitor> logger,
+
+        public KubernetesListener(ILogger<KubernetesListener> logger,
                                  IHealthCheckServiceProvider healthCheckService,
-                                 IOptions<ProbeLogOptions> probeLogOptions,
-                                 IOptions<KubernetesMonitorOptions> monitorOptions)
+                                 IOptions<ListenerLogOptions> probeLogOptions,
+                                 IOptions<KubernetesListenerOptions> ListenerOptions)
         {
             ArgumentNullException.ThrowIfNull(logger, nameof(logger));
             ArgumentNullException.ThrowIfNull(healthCheckService, nameof(healthCheckService));
             ArgumentNullException.ThrowIfNull(probeLogOptions?.Value, nameof(probeLogOptions));
-            ArgumentNullException.ThrowIfNull(monitorOptions?.Value, nameof(monitorOptions));
+            ArgumentNullException.ThrowIfNull(ListenerOptions?.Value, nameof(ListenerOptions));
 
             _logger = logger;
             _healthCheckService = healthCheckService;
             _probeLogOptions = probeLogOptions.Value;
-            _monitorOptions = monitorOptions.Value;
+            _ListenerOptions = ListenerOptions.Value;
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)
@@ -64,12 +64,12 @@ namespace HealthCheck.Monitors.Kubernetes
             Task task;
             try
             {
-                _logger.LogInformation("Starting: Monitor");
+                _logger.LogInformation("Starting: Listener");
                 task = base.StartAsync(cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Monitor failed to start");
+                _logger.LogError(ex, "Listener failed to start");
                 task = Task.FromException(ex);
             }
 
@@ -78,7 +78,7 @@ namespace HealthCheck.Monitors.Kubernetes
 
         public override Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Stopping: Monitor");
+            _logger.LogInformation("Stopping: Listener");
             return base.StopAsync(cancellationToken);
         }
 
@@ -87,27 +87,27 @@ namespace HealthCheck.Monitors.Kubernetes
         {
             // Process in order of Startup, Readiness, then Liveness
             // Must wait for probe before going on to next one
-            if (_monitorOptions.Startup != null)
+            if (_ListenerOptions.Startup != null)
             {
-                // One Time Monitoring
-                await ExecuteIntervalCheck(_monitorOptions.CheckRetryIntervalInSeconds, ProbeTypeEnum.Startup, cancellationToken);
-                await MonitorPort(_monitorOptions.Startup.Port, ProbeTypeEnum.Startup, cancellationToken);
+                // One Time Listenering
+                await ExecuteIntervalCheck(_ListenerOptions.CheckRetryIntervalInSeconds, ProbeTypeEnum.Startup, cancellationToken);
+                await ListenerPort(_ListenerOptions.Startup.Port, ProbeTypeEnum.Startup, cancellationToken);
             }
 
-            if (_monitorOptions.Readiness != null)
+            if (_ListenerOptions.Readiness != null)
             {
-                // One Time Monitoring
-                await ExecuteIntervalCheck(_monitorOptions.CheckRetryIntervalInSeconds, ProbeTypeEnum.Readiness, cancellationToken);
-                await MonitorPort(_monitorOptions.Readiness.Port, ProbeTypeEnum.Readiness, cancellationToken);
+                // One Time Listenering
+                await ExecuteIntervalCheck(_ListenerOptions.CheckRetryIntervalInSeconds, ProbeTypeEnum.Readiness, cancellationToken);
+                await ListenerPort(_ListenerOptions.Readiness.Port, ProbeTypeEnum.Readiness, cancellationToken);
             }
 
-            if (_monitorOptions.Liveness != null)
+            if (_ListenerOptions.Liveness != null)
             {
-                // Keep monitoring for duration of application
+                // Keep Listenering for duration of application
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    await ExecuteIntervalCheck(_monitorOptions.CheckRetryIntervalInSeconds, ProbeTypeEnum.Liveness, cancellationToken);
-                    await MonitorPort(_monitorOptions.Liveness.Port, ProbeTypeEnum.Liveness, cancellationToken);
+                    await ExecuteIntervalCheck(_ListenerOptions.CheckRetryIntervalInSeconds, ProbeTypeEnum.Liveness, cancellationToken);
+                    await ListenerPort(_ListenerOptions.Liveness.Port, ProbeTypeEnum.Liveness, cancellationToken);
                 }
             }
 
@@ -135,7 +135,7 @@ namespace HealthCheck.Monitors.Kubernetes
         }
 
 
-        private async Task MonitorPort(int port, ProbeTypeEnum probeType, CancellationToken cancellationToken)
+        private async Task ListenerPort(int port, ProbeTypeEnum probeType, CancellationToken cancellationToken)
         {
             try
             {
@@ -154,12 +154,12 @@ namespace HealthCheck.Monitors.Kubernetes
 
             catch (OperationCanceledException ex)
             {
-                _logger.LogError(ex, "Monitor shutting down by request");
+                _logger.LogError(ex, "Listener shutting down by request");
             }
 
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Monitor encountered an error and is shutting down");
+                _logger.LogError(ex, "Listener encountered an error and is shutting down");
             }
 
             await Task.CompletedTask;

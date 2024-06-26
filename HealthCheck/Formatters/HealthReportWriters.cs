@@ -9,7 +9,7 @@ namespace HealthCheck.Formatters
     internal static class HealthReportWriters
     {
         public static string ContentType() => Json.JSON_CONTENT_TYPE;
-        public static string FormatResponse(HealthReport report)
+        public static string FormatJson(HealthReport report)
         {
             return Json.Serialize(
                 new

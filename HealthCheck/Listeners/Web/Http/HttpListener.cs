@@ -5,8 +5,9 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using HealthCheck.Configuration;
+using HealthCheck.Listeners.Web;
 
-namespace HealthCheck.Monitors.Http
+namespace HealthCheck.Listeners.Web.Http
 {
     /// <summary>
     /// This will respond to HTTP probes using the given port by issuing HTTP 200 or HTTP 503 status codes
@@ -26,18 +27,18 @@ namespace HealthCheck.Monitors.Http
     ///     1.  If the request is not a HTTP GET method, then a 405 Method Not Allowed is returned
     ///     2.  If an endpoint is not matched, then a 404 Not Found is returned
     /// </remarks>
-    internal sealed class HttpMonitor : HttpMonitorBase
+    internal sealed class HttpListener : ListenerBase
     {
-        private readonly HttpMonitorOptions _monitorOptions;
+        private readonly HttpListenerOptions _ListenerOptions;
 
-        public HttpMonitor(ILogger<HttpMonitor> logger,
+        public HttpListener(ILogger<HttpListener> logger,
                            IHealthCheckServiceProvider healthCheckService,
-                           IOptions<ProbeLogOptions> probeLogOptions,
-                           IOptions<HttpMonitorOptions> monitorOptions)
+                           IOptions<ListenerLogOptions> probeLogOptions,
+                           IOptions<HttpListenerOptions> ListenerOptions)
             : base(logger, healthCheckService, probeLogOptions)
         {
-            ArgumentNullException.ThrowIfNull(monitorOptions?.Value, nameof(monitorOptions));
-            _monitorOptions = monitorOptions.Value;
+            ArgumentNullException.ThrowIfNull(ListenerOptions?.Value, nameof(ListenerOptions));
+            _ListenerOptions = ListenerOptions.Value;
         }
 
 
@@ -47,8 +48,8 @@ namespace HealthCheck.Monitors.Http
         /// <returns></returns>
         protected override TcpListener CreateTcpListener()
         {
-            Asserts.Argument.AssertNotValidPort(_monitorOptions.Port);
-            return new TcpListener(IPAddress.Any, _monitorOptions.Port);
+            Asserts.Argument.AssertNotValidPort(_ListenerOptions.Port);
+            return new TcpListener(IPAddress.Any, _ListenerOptions.Port);
         }
     }
 }
