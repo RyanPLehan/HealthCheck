@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace HealthCheck.Registration
 {
-    public static class ServiceCollectionExtension
+    public static partial class ServiceCollectionExtension
     {
         public static IHealthChecksBuilder AddHealthChecks(this IServiceCollection services)
         {
